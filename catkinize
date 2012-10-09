@@ -7,7 +7,7 @@ git init
 git add .
 git commit -a -m 'Pre-catkinization checkin.'
 
-stack_name=$(dirname `pwd`)
+stack_name=$(basename `pwd`)
 mkdir $stack_name
 
 cat > $stack_name/CMakeLists.txt <<EOF
@@ -28,7 +28,7 @@ include_directories(${ROS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 # Add a library
 add_library($stack_name src/$stack_name)
-target_link_libraries(foo ${ROS_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries($stack_name ${ROS_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS $stack_name
         ARCHIVE DESTINATION lib
@@ -59,7 +59,7 @@ cat > $stack_name/package.xml <<EOF
 
   <!-- Plugins go in here -->
   <export>
-    <cpp cflags="-I${prefix}/srv/cpp" lflags="-lfoo"/>
+    <cpp cflags="-I${prefix}/srv/cpp" lflags="-l$stack_name"/>
   </export>
 
 </package>
@@ -69,5 +69,8 @@ git add $stack_name
 git rm stack.xml
 git commit -a -m 'Convert using the catkinize utility.'
 
-echo "Please edit the files in $stack_name/ to make sure they are correct."
+set +x
+echo "
+Please edit the files in $stack_name/ to make sure they are correct.
+"
 
