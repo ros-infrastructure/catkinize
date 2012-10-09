@@ -12,8 +12,6 @@ Simple usage
     cd /directory/of/a/rosbuild/stack/
     catkinize
 
-The output is a bash script that will catkinize the project.
-
 Background
 ----------
 

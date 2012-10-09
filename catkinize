@@ -1,8 +1,11 @@
 #!/bin/bash
 
+set -x
+set -o errexit
+
 git init
 git add .
-git commit -a
+git commit -a -m 'Pre-catkinization checkin.'
 
 stack_name=$(dirname `pwd`)
 mkdir $stack_name
@@ -36,18 +39,29 @@ install(DIRECTORY include/
         PATTERN ".svn" EXCLUDE)
 EOF
 
-cat > $stack_name/manifest.xml <<EOF
+# This file is defined in REP 127.
+cat > $stack_name/package.xml <<EOF
 <package>
-  <catkin />
   <description brief="$stack_name">FIXME</description>
-  <author>FIXME</author>
+  <author email="FIXME">FIXME</author>
+    ...
+  <maintainer email="FIXME">FIXME</maintainer>
+    ...
   <license>FIXME</license>
-  <review status="experimental" notes=""/>
+
   <url>http://ros.org/wiki/$stack_name</url>
-  <depend package="roscpp"/>
+  <run_depend>PACKAGE_NAME</run_depend>
+    ...
+  <build_depend>PACKAGE_NAME</build_depend>
+    ...
+  <test_depend>PACKAGE_NAME</test_depend>
+    ...
+
+  <!-- Plugins go in here -->
   <export>
     <cpp cflags="-I${prefix}/srv/cpp" lflags="-lfoo"/>
   </export>
+
 </package>
 EOF
 
