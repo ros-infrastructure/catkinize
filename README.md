@@ -9,8 +9,10 @@ can decide how to proceed with manual changes.
 Simple usage
 ------------
 
-    catkinize path/to/your/rosbuild/stack
+    cd /directory/of/a/rosbuild/stack/
+    catkinize
 
+The output is a bash script that will catkinize the project.
 
 Background
 ----------
