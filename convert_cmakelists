@@ -12,7 +12,8 @@ conversions = [
     ('rosbuild_add_library', 'add_library'),
     ('rosbuild_add_executable', 'add_executable'),
     ('rosbuild_add_gtest', 'add_gtest'),
-    ('rosbuild_add_pyunit', 'catkin_add_nosetests')
+    ('rosbuild_add_pyunit', 'catkin_add_nosetests'),
+    ('rosbuild_add_rostest', 'add_rostest')
 ]
 
 def main():
@@ -34,8 +35,30 @@ def convert(lines):
     Catkinize the lines of a file as much as we can without manual intervention.
     """
     lines = map(convert_line, lines)
-    lines = convert_boost(lines)
+    lines = list(convert_boost(lines))
+    lines = add_rostest_package_if_needed(lines)
     return lines
+
+def add_rostest_package_if_needed(lines):
+    """
+    Prepend a find_package line for rostest if add_rostest lines are present.
+    """
+    have_rostest_lines = bool([l for l in lines if 'add_rostest' in l])
+    have_find_package_line = bool([l for l in lines
+                                   if 'find_package' in l and 'rostest' in l])
+    if have_rostest_lines and not have_find_package_line:
+        lines = list(add_after(lines, after_lines_with='cmake_minimum_required',
+                               new_line='find_package(ROS COMPONENTS rostest)'))
+    return lines
+
+def add_after(lines, after_lines_with, new_line):
+    """
+    Add a given new line after all lines containing a given string.
+    """
+    for l in lines:
+        yield l
+        if after_lines_with in l:
+            yield new_line
 
 def convert_line(line):
     """
