@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+
+'''
+This script partially converts a CMakeLists.txt file from rosbuild to catkin.
+'''
+
+from __future__ import print_function
+import re
+import sys
+
+conversions = [
+    ('rosbuild_add_library', 'add_library'),
+    ('rosbuild_add_executable', 'add_executable'),
+    ('rosbuild_add_gtest', 'add_gtest'),
+    ('rosbuild_add_pyunit', 'catkin_add_nosetests')
+]
+
+def main():
+    args = sys.argv[1:]
+    if not args:
+        print('usage:', sys.argv[0], 'CMakeLists.txt')
+        sys.exit(1)
+
+    for filename in args:
+        print('Converting %s' % filename, file=sys.stderr)
+        with open(filename, 'r') as f_in:
+            lines = f_in.read().splitlines()
+        with open(filename, 'w') as f_out:
+            for line in convert(lines):
+                print(line, file=f_out)
+
+def convert(lines):
+    """
+    Catkinize the lines of a file as much as we can without manual intervention.
+    """
+    lines = map(convert_line, lines)
+    lines = convert_boost(lines)
+    return lines
+
+def convert_line(line):
+    """
+    Do all replacements that can be done for a single line without looking at
+    anything else.
+    """
+    for a, b in conversions:
+        line = line.replace(a, b)
+    return line
+
+def convert_boost(lines):
+    """
+    Convert Boost sections.
+    """
+    link_boost_rx = re.compile(r'rosbuild_link_boost\(([^ ]+)\s+([^)]+)\)')
+    for l in lines:
+        if 'rosbuild_add_boost_directories' in l:
+            # These lines are no longer needed.
+            continue
+        elif 'rosbuild_link_boost' in l:
+            # rosbuild_link_boost lines expand to multiple statements.
+            m = link_boost_rx.match(l)
+            target = m.group(1)
+            components = m.group(2)
+            yield 'find_package(Boost REQUIRED COMPONENTS %s)' % components
+            yield 'include_directories(${Boost_INCLUDE_DIRS})'
+            yield 'target_link_libraries(%s ${Boost_LIBRARIES})' % target
+        else:
+            # All other lines pass through unchanged.
+            yield l 
+
+if __name__ == '__main__':
+    main()
+
