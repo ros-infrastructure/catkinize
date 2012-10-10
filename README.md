@@ -15,6 +15,6 @@ Simple usage
 Background
 ----------
 
-[This wiki page](http://www.ros.org/wiki/win_ros/catkinization)
+[This wiki page](http://www.ros.org/doc/groovy/api/catkin/html/user_guide/rosbuild_migration.html)
 gives some instruction on how to catkinize.
 
