@@ -21,3 +21,6 @@ More general information on writing CMakeLists.txt files using Catkin can
 be found
 [here](http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html)
 
+The specification for package.xml files is in [REP
+127](http://www.ros.org/reps/rep-0127.html).
+
