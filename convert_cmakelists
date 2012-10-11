@@ -17,39 +17,47 @@ conversions = [
 ]
 
 def main():
+    # Parse args
     args = sys.argv[1:]
-    if not args:
-        print('usage:', sys.argv[0], 'CMakeLists.txt')
+    if len(args) != 3:
+        print('usage:', sys.argv[0], 'project_name CMakeLists.txt manifest.xml')
         sys.exit(1)
+    project_name, cmakelists_path, manifest_path = args
 
-    for filename in args:
-        print('Converting %s' % filename, file=sys.stderr)
-        with open(filename, 'r') as f_in:
-            lines = f_in.read().splitlines()
-        with open(filename, 'w') as f_out:
-            for line in convert(lines):
-                print(line, file=f_out)
+    # Convert CMakeLists.txt
+    print('Converting %s' % cmakelists_path, file=sys.stderr)
+    with open(cmakelists_path, 'r') as f_in:
+        lines = f_in.read().splitlines()
+    with open(cmakelists_path, 'w') as f_out:
+        for line in convert_cmakelists(project_name, lines):
+            print(line, file=f_out)
 
-def convert(lines):
+def convert_cmakelists(project_name, lines):
     """
     Catkinize the lines of a file as much as we can without manual intervention.
     """
     lines = map(convert_line, lines)
     lines = list(convert_boost(lines))
-    lines = add_rostest_package_if_needed(lines)
+    lines = add_header_if_needed(lines, make_header_lines(lines, project_name))
     return lines
 
-def add_rostest_package_if_needed(lines):
-    """
-    Prepend a find_package line for rostest if add_rostest lines are present.
-    """
-    have_rostest_lines = bool([l for l in lines if 'add_rostest' in l])
-    have_find_package_line = bool([l for l in lines
-                                   if 'find_package' in l and 'rostest' in l])
-    if have_rostest_lines and not have_find_package_line:
-        lines = list(add_after(lines, after_lines_with='cmake_minimum_required',
-                               new_line='find_package(ROS COMPONENTS rostest)'))
+def add_header_if_needed(lines, header):
+    if not [l for l in lines if 'catkin_project' in l]:
+        return header + [''] + lines
     return lines
+
+def make_header_lines(lines, project_name):
+    """
+    Make top lines of CMakeLists file according to
+    http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
+    """
+    header = '''
+cmake_minimum_required(VERSION 2.8.3)
+project(%s)
+find_package(catkin REQUIRED COMPONENTS rostest)
+catkin_project(${PROJECT_NAME})
+''' % project_name
+    return header.strip().splitlines()
 
 def add_after(lines, after_lines_with, new_line):
     """
@@ -71,7 +79,7 @@ def convert_line(line):
 
 def convert_boost(lines):
     """
-    Convert Boost sections.
+    convert_cmakelists Boost sections.
     """
     link_boost_rx = re.compile(r'rosbuild_link_boost\(([^ ]+)\s+([^)]+)\)')
     for l in lines:
