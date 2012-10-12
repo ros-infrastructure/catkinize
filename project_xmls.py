@@ -1,3 +1,5 @@
+'''Functions for generating project.xml files.'''
+
 import xml.etree.ElementTree as ET
 import re
 
