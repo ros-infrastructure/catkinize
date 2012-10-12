@@ -1,12 +1,18 @@
-'''Functions for generating project.xml files.'''
+#!/usr/bin/env python
+
+'''Functions for generating package.xml files.'''
 
 import xml.etree.ElementTree as ET
 import re
 
 SPACE_COMMA_RX = re.compile(r'[, ]+')
 
-def make_from_stack_and_manifest(manifest_xml_str,
-                                 package_name, version,
+def main():
+    pass
+
+def make_from_stack_and_manifest(stack_xml_str,
+                                 manifest_xml_str,
+                                 package_name,
                                  architecture_independent, metapackage,
                                  bugtracker_url, replaces, conflicts):
     """
@@ -23,7 +29,6 @@ def make_from_stack_and_manifest(manifest_xml_str,
       <license>BSD</license>\
       <url>http://pr.willowgarage.com/</url>\
       <logo>http://pr.willowgarage.com/blog/photos/sensor_head1_500.jpg</logo>\
-    \
       <depend package="pkgname"/>\
       <depend package="common"/>\
       <rosdep name="python" />\
@@ -242,4 +247,7 @@ def make_exports_section(exports, architecture_independent, metapackage):
     if metapackage:
         parts.append('<metapackage/>')
     return '\n'.join(parts)
+
+if __name__ == '__main__':
+    main()
 
