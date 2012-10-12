@@ -2,10 +2,10 @@
 
 '''Script to generate package.xml from manifest.xml'''
 
-import xml.etree.ElementTree as ET
+from __future__ import print_function
 from optparse import OptionParser
 import re
-import sys
+import xml.etree.ElementTree as ET
 
 SPACE_COMMA_RX = re.compile(r',\s*')
 
@@ -52,7 +52,7 @@ def main():
                                      options.replaces,
                                      options.conflicts)
         pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
-        sys.stdout.write(pkg_xml)
+        print(pkg_xml)
 
 def merge_dups(lines):
     """
