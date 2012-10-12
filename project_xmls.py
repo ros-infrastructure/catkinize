@@ -1,3 +1,115 @@
+import xml.etree.ElementTree as ET
+import re
+
+SPACE_COMMA_RX = re.compile(r'[, ]+')
+
+def make_from_stack_and_manifest(manifest_xml_str,
+                                 package_name, version,
+                                 architecture_independent, metapackage,
+                                 bugtracker_url, replaces, conflicts):
+    """
+    Make the contents of a project.xml file from the string contents of
+    manifest.xml.
+
+    >>> manifest_xml_str = '\
+    <package>\
+      <description brief="one line of text">\
+        long description goes here, \
+        <em>XHTML is allowed</em>\
+      </description>\
+      <author>Alice/alice@somewhere.bar, Bob/bob@nowhere.foo</author>\
+      <license>BSD</license>\
+      <url>http://pr.willowgarage.com/</url>\
+      <logo>http://pr.willowgarage.com/blog/photos/sensor_head1_500.jpg</logo>\
+    \
+      <depend package="pkgname"/>\
+      <depend package="common"/>\
+      <rosdep name="python" />\
+      <versioncontrol type="svn"\
+          url="https://playerstage.svn.sourceforge.net/svnroot/playerstage/code/player/trunk"/>\
+      <export>\
+        <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lros"/>\
+        <cpp os="osx" cflags="-I${prefix}/include" lflags="-L${prefix}/lib\
+            -Wl,-rpath,-L${prefix}lib -lrosthread -framework CoreServices"/>\
+      </export>\
+    </package>\
+    '
+    >>> pkg_xml = make_from_stack_and_manifest(  # doctest: +ELLIPSIS
+    ...     manifest_xml_str,
+    ...     package_name='my_pkg', version='0.1.2', 
+    ...     architecture_independent=False,
+    ...     metapackage=False,
+    ...     bugtracker_url='https://github.com/ros/my_pkg/issues',
+    ...     replaces=[], conflicts=[])
+    >>> import xml.etree.ElementTree as ET
+    >>> pkg = ET.XML(pkg_xml)
+    """
+    manifest = ET.XML(manifest_xml_str)
+    description = manifest.find('description').text
+    authors_str = manifest.find('author').text
+    authors = parse_authors_field(authors_str)
+    licenses_str = manifest.find('license').text
+    licenses = SPACE_COMMA_RX.split(licenses_str)
+    website_url = manifest.find('url').text
+    maintainers = authors
+    depend_tags = manifest.findall('depend')
+    depends = [d.attrib['package'] for d in depend_tags]
+    export_tags = manifest.find('export').getchildren()
+    exports = [(e.tag, e.attrib) for e in export_tags]
+
+    xml = create_project_xml(package_name=package_name,
+                             version=version,
+                             description=description,
+                             maintainers=maintainers,
+                             licenses=licenses,
+                             website_url=website_url,
+                             bugtracker_url=bugtracker_url,
+                             authors=authors,
+                             build_depends=depends,
+                             run_depends=depends,
+                             test_depends=depends,
+                             replaces=replaces,
+                             conflicts=conflicts,
+                             exports=exports,
+                             architecture_independent=architecture_independent,
+                             metapackage=metapackage)
+
+    for name in 'maintainer build_depend run_depend test_depend'.split():
+        xml = comment_out_tags_named(xml, name)
+
+    return xml
+
+def comment_out_tags_named(xml, tag_name):
+    """
+    Comment out all tags with a given name.
+
+    >>> comment_out('<a/><b/><c></c><b q="foo">bop</b><d>', 'b')
+    '<a/><!-- <b/> --><c><!-- <b q="foo">bop</b> --><d>', 'b')
+    """
+    rx1 = re.compile('(<%s[^>]*/>)' % tag_name)
+    rx2 = re.compile('(<%s\\b)' % tag_name)
+    rx3 = re.compile('(</%s>)' % tag_name)
+    xml = rx1.sub(r'<!-- \1 -->', xml)
+    xml = rx2.sub(r'<!-- \1', xml)
+    xml = rx3.sub(r'\1 -->', xml)
+    return xml
+
+def parse_authors_field(authors_str):
+    """
+    Extract author names and email addresses from free-form text in the <author>
+    tag of manifest.xml.
+
+    >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
+    [('Alice', 'alice@somewhere.bar'), 'Bob']
+    """
+    return [unpack_if_singleton(tuple(s.split('/')))
+            for s in SPACE_COMMA_RX.split(authors_str)]
+
+def unpack_if_singleton(maybe_tuple):
+    if len(maybe_tuple) == 1:
+        return maybe_tuple[0]
+    return maybe_tuple
+
 def create_project_xml(package_name, version, description, maintainers,
                        licenses, website_url, bugtracker_url, authors,
                        build_depends, run_depends, test_depends, replaces,
@@ -5,6 +117,9 @@ def create_project_xml(package_name, version, description, maintainers,
                        metapackage):
     """
     Generate the contents of project.xml from some parameters.
+
+    :returns: XML-formatted string
+    :rtype: str
 
     >>> desc = 'ROS communications-related packages, including client libs...'
     >>> pxml = create_project_xml(  # doctest: +ELLIPSIS
@@ -71,6 +186,9 @@ def create_project_xml(package_name, version, description, maintainers,
 %(exports_part)s
 </package>
 ''' % vars()
+
+def comment_out(xml):
+    return '<!-- %s -->' % xml
 
 def make_section(tag_name, rows):
     """
