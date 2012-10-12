@@ -3,18 +3,61 @@
 '''Functions for generating package.xml files.'''
 
 import xml.etree.ElementTree as ET
+from optparse import OptionParser
 import re
+import sys
 
 SPACE_COMMA_RX = re.compile(r'[, ]+')
 
 def main():
-    pass
+    usage = 'usage: %prog [options] manifest_xml_path package_name version'
+    parser = OptionParser(usage)
+    parser.add_option('-a', '--architecture_independent',
+                      dest='architecture_independent',
+                      action='store_true', default=False,
+                      help='Whether the package runs on all platforms')
+    parser.add_option('-m', '--metapackage',
+                      dest='metapackage',
+                      action='store_true', default=False,
+                      help='Whether this package is a metapackage')
+    parser.add_option('-b', '--bugtracker_url',
+                      dest='bugtracker_url',
+                      type='string', default='',
+                      help='URL for issues related to this package')
+    parser.add_option('-r', '--replaces',
+                      dest='replaces',
+                      type='string', default='',
+                      help='Comma-separated list of packages replaced by ' +
+                           'this package')
+    parser.add_option('-c', '--conflicts',
+                      dest='conflicts',
+                      type='string', default='',
+                      help='Comma-separated list of pkgs conflicting ' +
+                           'with this package')
+    options, args = parser.parse_args()
+    if len(args) != 3:
+        parser.error('wrong number of arguments')
 
-def make_from_stack_and_manifest(stack_xml_str,
-                                 manifest_xml_str,
-                                 package_name,
-                                 architecture_independent, metapackage,
-                                 bugtracker_url, replaces, conflicts):
+    manifest_xml_path = args[0]
+    package_name = args[1]
+    version = args[2]
+    with open(manifest_xml_path) as f:
+        manifest_xml_str = f.read()
+        pkg_xml = make_from_manifest(manifest_xml_str,
+                                     package_name,
+                                     version,
+                                     options.architecture_independent,
+                                     options.metapackage,
+                                     options.bugtracker_url,
+                                     options.replaces,
+                                     options.conflicts)
+        sys.stdout.write(pkg_xml)
+
+def make_from_manifest(manifest_xml_str,
+                       package_name,
+                       version,
+                       architecture_independent, metapackage,
+                       bugtracker_url, replaces, conflicts):
     """
     Make the contents of a project.xml file from the string contents of
     manifest.xml.
@@ -41,7 +84,7 @@ def make_from_stack_and_manifest(stack_xml_str,
       </export>\
     </package>\
     '
-    >>> pkg_xml = make_from_stack_and_manifest(  # doctest: +ELLIPSIS
+    >>> pkg_xml = make_from_manifest(  # doctest: +ELLIPSIS
     ...     manifest_xml_str,
     ...     package_name='my_pkg', version='0.1.2', 
     ...     architecture_independent=False,
