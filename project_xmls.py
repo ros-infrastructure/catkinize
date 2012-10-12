@@ -83,13 +83,13 @@ def comment_out_tags_named(xml, tag_name):
     """
     Comment out all tags with a given name.
 
-    >>> comment_out('<a/><b/><c></c><b q="foo">bop</b><d>', 'b')
-    '<a/><!-- <b/> --><c><!-- <b q="foo">bop</b> --><d>', 'b')
+    >>> comment_out_tags_named('<a/><b/><c></c><b q="foo">bop</b><d>', 'b')
+    '<a/><!-- <b/> --><c></c><!-- <b q="foo">bop</b> --><d>'
     """
-    rx1 = re.compile('(<%s[^>]*/>)' % tag_name)
+    rx1 = re.compile('(\\b%s/>)' % tag_name)
     rx2 = re.compile('(<%s\\b)' % tag_name)
     rx3 = re.compile('(</%s>)' % tag_name)
-    xml = rx1.sub(r'<!-- \1 -->', xml)
+    xml = rx1.sub(r'\1 -->', xml)
     xml = rx2.sub(r'<!-- \1', xml)
     xml = rx3.sub(r'\1 -->', xml)
     return xml
@@ -100,15 +100,17 @@ def parse_authors_field(authors_str):
     tag of manifest.xml.
 
     >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
-    [('Alice', 'alice@somewhere.bar'), 'Bob']
+    [('Alice', {'email': 'alice@somewhere.bar'}), 'Bob']
     """
-    return [unpack_if_singleton(tuple(s.split('/')))
-            for s in SPACE_COMMA_RX.split(authors_str)]
-
-def unpack_if_singleton(maybe_tuple):
-    if len(maybe_tuple) == 1:
-        return maybe_tuple[0]
-    return maybe_tuple
+    authors = []
+    for s in SPACE_COMMA_RX.split(authors_str):
+        parts = s.split('/')
+        if len(parts) == 1:
+            authors.append(parts[0])
+        elif len(parts) == 2:
+            pair = (parts[0], dict(email=parts[1]))
+            authors.append(pair)
+    return authors
 
 def create_project_xml(package_name, version, description, maintainers,
                        licenses, website_url, bugtracker_url, authors,
