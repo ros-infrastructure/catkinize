@@ -8,5 +8,6 @@ setup(name='catkinize',
       author='Issac Trotts',
       author_email='itrotts@willowgarage.com',
       url='https://github.com/ijt/catkinize',
-      packages=['distutils', 'distutils.command'])
+      scripts=['scripts/catkinize_manifest_xml_to_package_xml.py',
+               'scripts/catkinize_cmakelists.py'])
 
