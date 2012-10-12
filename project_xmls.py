@@ -3,14 +3,30 @@ import re
 
 SPACE_COMMA_RX = re.compile(r'[, ]+')
 
-def make_from_stack_and_manifest(manifest_xml_str,
-                                 package_name, version,
+def make_from_stack_and_manifest(stack_xml_str,
+                                 manifest_xml_str,
+                                 package_name,
                                  architecture_independent, metapackage,
                                  bugtracker_url, replaces, conflicts):
     """
     Make the contents of a project.xml file from the string contents of
     manifest.xml.
 
+    >>> stack_xml_str = '\
+    <stack>\
+      <version>3.4.5</version>\
+      <description brief="common code for personal robots">\
+        A set of code and messages that are widely useful to all robots. Things\
+        like generic robot messages (i.e., kinematics, transforms), a generic \
+        transform library (tf), laser-scan utilities, etc.\
+      </description>\
+      <author>Maintained by Tully Foote</author>\
+      <license>BSD</license>\
+      <review status="unreviewed" notes=""/>\
+      <url>http://pr.willowgarage.com/wiki/common</url>\
+      <depend stack="ros"/>\
+    </stack>\
+    '
     >>> manifest_xml_str = '\
     <package>\
       <description brief="one line of text">\
@@ -35,15 +51,22 @@ def make_from_stack_and_manifest(manifest_xml_str,
     </package>\
     '
     >>> pkg_xml = make_from_stack_and_manifest(  # doctest: +ELLIPSIS
-    ...     manifest_xml_str,
-    ...     package_name='my_pkg', version='0.1.2', 
+    ...     stack_xml_str, manifest_xml_str,
+    ...     package_name='my_pkg',
     ...     architecture_independent=False,
     ...     metapackage=False,
     ...     bugtracker_url='https://github.com/ros/my_pkg/issues',
     ...     replaces=[], conflicts=[])
     >>> import xml.etree.ElementTree as ET
     >>> pkg = ET.XML(pkg_xml)
+    >>> pkg.find('version').text
+    '3.4.5'
+    >>> pkg.find('license').text
+    'BSD'
     """
+    stack = ET.XML(stack_xml_str)
+    version = stack.find('version').text
+
     manifest = ET.XML(manifest_xml_str)
     description = manifest.find('description').text
     authors_str = manifest.find('author').text
