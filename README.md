@@ -1,16 +1,33 @@
 Catkinize
 =========
 
-Catkinize converts ROS stacks to catkin projects.  In cases where it is not
-clear how to do this, Catkinize makes a note of what needs to be done.  After
-doing the conversion, Catkinize outputs a list of issues encountered so the user
-can decide how to proceed with manual changes.
+This is a collection of scripts to convert ROS stacks to Catkin.
 
-Simple usage
-------------
 
-    cd /directory/of/a/rosbuild/stack/
-    catkinize
+Installing
+----------
+
+	sudo python setup.py install	
+
+Example
+-------
+
+	hg clone https://kforge.ros.org/common/filters
+	cd filters
+	git init
+	git add .
+	alias gcam='git commit -a -m'
+	gcam 'Version before converting to Catkin'
+	catkinize_cmakelists.py filters CMakeLists.txt	
+	gcam 'Run catkinize_cmakelists'
+	$EDITOR CMakeLists.txt  # Make any changes needed
+	gcam 'More Catkinization of CMakeLists'
+	catkinize_manifest_xml_to_package_xml.py -a manifest.xml filters 1.6.0 \
+		> package.xml
+	git add package.xml
+	gcam 'Generate package.xml from manifest.xml'
+	$EDITOR package.xml   # Make any changes needed
+	gcam 'More Catkinization of package.xml'
 
 Background
 ----------
