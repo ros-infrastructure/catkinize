@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Functions for generating package.xml files.'''
+'''Script to generate package.xml from manifest.xml'''
 
 import xml.etree.ElementTree as ET
 from optparse import OptionParser
