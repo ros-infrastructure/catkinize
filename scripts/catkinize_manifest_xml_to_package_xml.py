@@ -250,7 +250,9 @@ def create_project_xml(package_name, version, description, maintainers,
 %(replaces_part)s
 %(conflicts_part)s
 
+  <export>
 %(exports_part)s
+  </export>
 </package>
 ''' % vars()
 
@@ -288,8 +290,8 @@ def make_empty_tag(name, attrs_dict):
 def space_join(words):
     return ' '.join(w for w in words if w)
 
-def indent(s):
-    return '  ' + s
+def indent(s, n=1):
+    return (n * '  ') + s
 
 def dict_to_attrs(d):
     """
@@ -298,7 +300,7 @@ def dict_to_attrs(d):
     return ' '.join('%s="%s"' % (k, v) for k, v in d.items())
 
 def make_exports_section(exports, architecture_independent, metapackage):
-    parts = [indent(make_empty_tag(name, attrs_dict))
+    parts = [indent(make_empty_tag(name, attrs_dict), n=2)
              for name, attrs_dict in exports]
     if architecture_independent:
         parts.append('<architecture_independent/>')
