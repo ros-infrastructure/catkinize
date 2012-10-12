@@ -51,7 +51,23 @@ def main():
                                      options.bugtracker_url,
                                      options.replaces,
                                      options.conflicts)
+        pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
         sys.stdout.write(pkg_xml)
+
+def merge_dups(lines):
+    """
+    Remove adjacent duplicate lines from a list of strings.
+
+    >>> merge_dups(['a', 'b', 'b'])
+    ['a', 'b']
+    >>> merge_dups(['a', 'b', 'b', 'a'])
+    ['a', 'b', 'a']
+    >>> merge_dups(['a'])
+    ['a']
+    >>> merge_dups([])
+    []
+    """
+    return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
 
 def make_from_manifest(manifest_xml_str,
                        package_name,
@@ -300,12 +316,13 @@ def dict_to_attrs(d):
     return ' '.join('%s="%s"' % (k, v) for k, v in d.items())
 
 def make_exports_section(exports, architecture_independent, metapackage):
-    parts = [indent(make_empty_tag(name, attrs_dict), n=2)
+    parts = [make_empty_tag(name, attrs_dict)
              for name, attrs_dict in exports]
     if architecture_independent:
         parts.append('<architecture_independent/>')
     if metapackage:
         parts.append('<metapackage/>')
+    parts = [indent(p, n=2) for p in parts]
     return '\n'.join(parts)
 
 if __name__ == '__main__':
