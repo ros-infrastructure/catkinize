@@ -28,9 +28,8 @@ def main():
     print('Converting %s' % cmakelists_path, file=sys.stderr)
     with open(cmakelists_path, 'r') as f_in:
         lines = f_in.read().splitlines()
-    with open(cmakelists_path, 'w') as f_out:
-        for line in convert_cmakelists(project_name, lines):
-            print(line, file=f_out)
+    for line in convert_cmakelists(project_name, lines):
+        print(line)
 
 def convert_cmakelists(project_name, lines):
     """
