@@ -7,7 +7,7 @@ from optparse import OptionParser
 import re
 import sys
 
-SPACE_COMMA_RX = re.compile(r'[, ]+')
+SPACE_COMMA_RX = re.compile(r',\s*')
 
 def main():
     usage = 'usage: %prog [options] manifest_xml_path package_name version'
@@ -95,16 +95,16 @@ def make_from_manifest(manifest_xml_str,
     >>> pkg = ET.XML(pkg_xml)
     """
     manifest = ET.XML(manifest_xml_str)
-    description = manifest.find('description').text
-    authors_str = manifest.find('author').text
+    description = xml_find(manifest, 'description').text
+    authors_str = xml_find(manifest, 'author').text
     authors = parse_authors_field(authors_str)
-    licenses_str = manifest.find('license').text
+    licenses_str = xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
-    website_url = manifest.find('url').text
+    website_url = xml_find(manifest, 'url').text
     maintainers = authors
     depend_tags = manifest.findall('depend')
     depends = [d.attrib['package'] for d in depend_tags]
-    export_tags = manifest.find('export').getchildren()
+    export_tags = xml_find(manifest, 'export').getchildren()
     exports = [(e.tag, e.attrib) for e in export_tags]
 
     xml = create_project_xml(package_name=package_name,
@@ -128,6 +128,21 @@ def make_from_manifest(manifest_xml_str,
         xml = comment_out_tags_named(xml, name)
 
     return xml
+
+def xml_find(tree, tag_name):
+    """
+    Return the first node with the given tag name, or Empty if none is found.
+    """
+    item = tree.find(tag_name)
+    return item if item is not None else Empty()
+
+class Empty(object):
+    """Empty result of a find operation on an XML tree."""
+    def __init__(self):
+        self.text = ''
+
+    def getchildren(self):
+        return []
 
 def comment_out_tags_named(xml, tag_name):
     """
