@@ -95,7 +95,7 @@ def make_from_manifest(manifest_xml_str,
     >>> pkg = ET.XML(pkg_xml)
     """
     manifest = ET.XML(manifest_xml_str)
-    description = xml_find(manifest, 'description').text
+    description = xml_find(manifest, 'description').text.strip()
     authors_str = xml_find(manifest, 'author').text
     authors = parse_authors_field(authors_str)
     licenses_str = xml_find(manifest, 'license').text
@@ -261,7 +261,7 @@ def make_section(tag_name, rows):
     """
     Make a string in XML format for a section with a given tag name.
     """
-    return '\n'.join(make_tag_from_row(tag_name, r) for r in rows)
+    return '\n'.join(indent(make_tag_from_row(tag_name, r)) for r in rows)
 
 def make_tag_from_row(name, row):
     """
