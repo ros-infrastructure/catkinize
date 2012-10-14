@@ -27,8 +27,8 @@ Example
 	gcam 'Version before converting to Catkin'
 
 	# Convert CMakeLists.txt
-	catkinize_cmakelists.py filters CMakeLists.txt > CMakeLists2.txt
-	mv CMakeLists2.txt CMakeLists.txt
+	mv CMakeLists.txt CMakeLists.old
+	catkinize_cmakelists.py filters CMakeLists.old > CMakeLists.txt
 	gcam 'Run catkinize_cmakelists'
 	$EDITOR CMakeLists.txt  # Make any changes needed
 	gcam 'More Catkinization of CMakeLists'
