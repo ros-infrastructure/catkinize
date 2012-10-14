@@ -38,7 +38,10 @@ Example
 		> package.xml
 	git add package.xml
 	gcam 'Generate package.xml from manifest.xml'
-	$EDITOR package.xml   # Make any changes needed
+	# Edit package.xml:
+	#  - Make sure there is a valid maintainer
+	#  - Uncomment dependencies as needed
+	$EDITOR package.xml
 	gcam 'More Catkinization of package.xml'
 
     # Check the results
