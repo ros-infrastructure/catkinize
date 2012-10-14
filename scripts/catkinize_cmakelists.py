@@ -87,15 +87,6 @@ catkin_project(${PROJECT_NAME})
 ''' % project_name
     return header.strip().splitlines()
 
-def add_after(lines, after_lines_with, new_line):
-    """
-    Add a given new line after all lines containing a given string.
-    """
-    for l in lines:
-        yield l
-        if after_lines_with in l:
-            yield new_line
-
 def convert_line(line):
     """
     Do all replacements that can be done for a single line without looking at
