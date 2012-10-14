@@ -80,10 +80,15 @@ def make_header_lines(lines, project_name):
     http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
     """
     header = '''
+# http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
 project(%s)
-find_package(catkin REQUIRED COMPONENTS rostest)
-catkin_project(${PROJECT_NAME})
+find_package(catkin REQUIRED)
+
+# catkin_package(
+#    INCLUDE_DIRS include
+#    LIBRARIES ${PROJECT_NAME}
+#    DEPENDS otherpkg)
 ''' % project_name
     return header.strip().splitlines()
 
