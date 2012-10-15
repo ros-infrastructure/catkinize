@@ -38,11 +38,9 @@ import re
 import sys
 
 conversions = [
-    ('rosbuild_add_library', 'add_library'),
-    ('rosbuild_add_executable', 'add_executable'),
     ('rosbuild_add_gtest', 'catkin_add_gtest'),
     ('rosbuild_add_pyunit', 'catkin_add_nosetests'),
-    ('rosbuild_add_rostest', 'add_rostest')
+    ('rosbuild_', '')
 ]
 
 def main():
