@@ -266,6 +266,11 @@ def create_project_xml(package_name, version, description, maintainers,
     licenses_part = '\n'.join(
         indent('<license>%s</license>' % l)
         for l in licenses)
+
+    bugtracker_part = '<url type="bugtracker">%s</url>' % bugtracker_url
+    if not bugtracker_url:
+        bugtracker_part = comment_out(bugtracker_part)
+
     authors_part = make_section('author', authors)
     build_depends_part = make_section('build_depend', build_depends)
     run_depends_part = make_section('run_depend', run_depends)
@@ -284,7 +289,7 @@ def create_project_xml(package_name, version, description, maintainers,
 %(licenses_part)s
 
   <url type="website">%(website_url)s</url>
-  <url type="bugtracker">%(bugtracker_url)s</url>
+%(bugtracker_part)s
 
 %(authors_part)s
 
