@@ -71,7 +71,7 @@ def convert_cmakelists(project_name, lines):
 
 
 def add_header_if_needed(lines, header):
-    if not [l for l in lines if 'catkin_project' in l]:
+    if not [l for l in lines if 'catkin_package' in l]:
         return header + [''] + lines
     return lines
 
