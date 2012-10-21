@@ -115,13 +115,15 @@ def convert_boost(lines):
     """
     convert_cmakelists Boost sections.
     """
-    for l in lines:
-        if 'rosbuild_add_boost_directories' in l:
+    for count, line in enumerate(lines):
+        if 'rosbuild_add_boost_directories' in line:
             # These lines are no longer needed.
             continue
-        elif 'rosbuild_link_boost' in l:
+        elif 'rosbuild_link_boost' in line:
             # rosbuild_link_boost lines expand to multiple statements.
-            m = LINK_BOOST_RX.match(l)
+            m = LINK_BOOST_RX.match(line)
+            if not m:
+                raise ValueError('Could not recognize rosbuild_link_boost statement starting in line %s (maybe multi-line?): \n%s' % (count, line))
             target = m.group(1)
             components = m.group(2)
             yield 'find_package(Boost REQUIRED COMPONENTS %s)' % components
@@ -129,7 +131,7 @@ def convert_boost(lines):
             yield 'target_link_libraries(%s ${Boost_LIBRARIES})' % target
         else:
             # All other lines pass through unchanged.
-            yield l
+            yield line
 
 
 if __name__ == '__main__':

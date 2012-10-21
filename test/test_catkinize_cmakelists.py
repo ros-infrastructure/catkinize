@@ -67,7 +67,9 @@ baz
                   'target_link_libraries(foo ${Boost_LIBRARIES})',
                   'baz']
         self.assertEqual(expect, result_lines)
-
+        lines = ['foo', 'rosbuild_link_boost(foo', 'bar' 'baz)']
+        line_gen = convert_boost(lines)
+        self.assertRaises(ValueError, list, line_gen)
 
     def test_main(self):
         pass
