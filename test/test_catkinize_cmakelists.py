@@ -20,6 +20,31 @@ class CatkinizeCmakeTest(unittest.TestCase):
         self.assertEqual('foo catkin_add_gtest(bar)', convert_line('foo rosbuild_add_gtest(bar)'))
         self.assertEqual('foo bla(bar)', convert_line('foo rosbuild_bla(bar)'))
 
+    def test_convert_cmakelists(self):
+        lines = ['foo',
+                 'rosbuild_add_boost_directories(foo bar)',
+                 'baz',
+                 'rosbuild_add_gtest(bar)',
+                 'bum',
+                 'rosbuild_link_boost(fooz baaz)',
+                 'endtest']
+        result_lines = convert_cmakelists('myprojecttest', lines)
+        self.assertEqual(21, len(result_lines))
+        self.assertTrue('catkin_add_gtest(bar)' in result_lines)
+        self.assertFalse('rosbuild_add_gtest(bar)' in result_lines)
+        self.assertTrue('project(myprojecttest)' in result_lines)
+        self.assertTrue('# catkin_package(' in result_lines)
+        # don't care too much about header contents in this test
+        expect_end = ['foo',
+                      'baz',
+                      'catkin_add_gtest(bar)',
+                      'bum',
+                      'find_package(Boost REQUIRED COMPONENTS baaz)',
+                      'include_directories(${Boost_INCLUDE_DIRS})',
+                      'target_link_libraries(fooz ${Boost_LIBRARIES})',
+                      'endtest']
+        self.assertEqual(expect_end, result_lines[-8:])
+
     def test_make_header_lines(self):
         lines = make_header_lines('foo')
         self.assertTrue('# catkin_package(' in lines, lines)
