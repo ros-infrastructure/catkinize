@@ -36,6 +36,7 @@ This script partially converts a CMakeLists.txt file from rosbuild to catkin.
 from __future__ import print_function
 import re
 import sys
+import argparse
 
 conversions = [
     ('rosbuild_add_gtest', 'catkin_add_gtest'),
@@ -44,20 +45,26 @@ conversions = [
 ]
 
 
-def main():
+def main(argv = sys.argv[1:], outstream=sys.stdout):
+    """
+    reads file and prints converted file to stdout
+    """
+    parser = argparse.ArgumentParser(description='Helper script to migrate rosbuild packages')
+    parser.add_argument('project_name',
+                        nargs=1,
+                        help='The name of the package')
+    parser.add_argument('cmakelists_path',
+                        nargs=1,
+                        help='path to the CMakeLists.txt')
     # Parse args
-    args = sys.argv[1:]
-    if len(args) != 2:
-        print('usage:', sys.argv[0], 'project_name CMakeLists.txt')
-        sys.exit(1)
-    project_name, cmakelists_path = args
+    args = parser.parse_args(argv)
 
     # Convert CMakeLists.txt
-    print('Converting %s' % cmakelists_path, file=sys.stderr)
-    with open(cmakelists_path, 'r') as f_in:
+    print('Converting %s' % args.cmakelists_path, file=sys.stderr)
+    with open(args.cmakelists_path[0], 'r') as f_in:
         lines = f_in.read().splitlines()
-    for line in convert_cmakelists(project_name, lines):
-        print(line)
+    for line in convert_cmakelists(args.project_name[0], lines):
+        print(line, file=outstream)
 
 
 def convert_cmakelists(project_name, lines):
