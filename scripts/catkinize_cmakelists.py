@@ -85,6 +85,7 @@ def make_header_lines(project_name):
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
 project(%s)
+# Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED)
 
 # catkin_package(
