@@ -10,4 +10,3 @@ setup(name='catkinize',
       url='https://github.com/ijt/catkinize',
       scripts=['scripts/catkinize_manifest_xml_to_package_xml.py',
                'scripts/catkinize_cmakelists.py'])
-

@@ -43,6 +43,7 @@ conversions = [
     ('rosbuild_', '')
 ]
 
+
 def main():
     # Parse args
     args = sys.argv[1:]
@@ -58,6 +59,7 @@ def main():
     for line in convert_cmakelists(project_name, lines):
         print(line)
 
+
 def convert_cmakelists(project_name, lines):
     """
     Catkinize the lines of a file as much as we can without manual intervention.
@@ -67,10 +69,12 @@ def convert_cmakelists(project_name, lines):
     lines = add_header_if_needed(lines, make_header_lines(lines, project_name))
     return lines
 
+
 def add_header_if_needed(lines, header):
     if not [l for l in lines if 'catkin_project' in l]:
         return header + [''] + lines
     return lines
+
 
 def make_header_lines(lines, project_name):
     """
@@ -93,6 +97,7 @@ find_package(catkin REQUIRED)
 ''' % project_name
     return header.strip().splitlines()
 
+
 def convert_line(line):
     """
     Do all replacements that can be done for a single line without looking at
@@ -101,6 +106,7 @@ def convert_line(line):
     for a, b in conversions:
         line = line.replace(a, b)
     return line
+
 
 def convert_boost(lines):
     """
@@ -121,8 +127,8 @@ def convert_boost(lines):
             yield 'target_link_libraries(%s ${Boost_LIBRARIES})' % target
         else:
             # All other lines pass through unchanged.
-            yield l 
+            yield l
+
 
 if __name__ == '__main__':
     main()
-

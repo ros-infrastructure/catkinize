@@ -38,6 +38,7 @@ import xml.etree.ElementTree as ET
 
 SPACE_COMMA_RX = re.compile(r',\s*')
 
+
 def main():
     usage = 'usage: %prog [options] manifest_xml_path package_name version'
     parser = OptionParser(usage)
@@ -83,6 +84,7 @@ def main():
         pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
         print(pkg_xml)
 
+
 def merge_dups(lines):
     """
     Remove adjacent duplicate lines from a list of strings.
@@ -97,6 +99,7 @@ def merge_dups(lines):
     []
     """
     return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
+
 
 def make_from_manifest(manifest_xml_str,
                        package_name,
@@ -131,7 +134,7 @@ def make_from_manifest(manifest_xml_str,
     '
     >>> pkg_xml = make_from_manifest(  # doctest: +ELLIPSIS
     ...     manifest_xml_str,
-    ...     package_name='my_pkg', version='0.1.2', 
+    ...     package_name='my_pkg', version='0.1.2',
     ...     architecture_independent=False,
     ...     metapackage=False,
     ...     bugtracker_url='https://github.com/ros/my_pkg/issues',
@@ -174,12 +177,14 @@ def make_from_manifest(manifest_xml_str,
 
     return xml
 
+
 def xml_find(tree, tag_name):
     """
     Return the first node with the given tag name, or Empty if none is found.
     """
     item = tree.find(tag_name)
     return item if item is not None else Empty()
+
 
 class Empty(object):
     """Empty result of a find operation on an XML tree."""
@@ -188,6 +193,7 @@ class Empty(object):
 
     def getchildren(self):
         return []
+
 
 def comment_out_tags_named(xml, tag_name):
     """
@@ -203,6 +209,7 @@ def comment_out_tags_named(xml, tag_name):
     xml = rx2.sub(r'<!-- \1', xml)
     xml = rx3.sub(r'\1 -->', xml)
     return xml
+
 
 def parse_authors_field(authors_str):
     """
@@ -221,6 +228,7 @@ def parse_authors_field(authors_str):
             pair = (parts[0], dict(email=parts[1]))
             authors.append(pair)
     return authors
+
 
 def create_project_xml(package_name, version, description, maintainers,
                        licenses, website_url, bugtracker_url, authors,
@@ -306,14 +314,17 @@ def create_project_xml(package_name, version, description, maintainers,
 </package>
 ''' % vars()
 
+
 def comment_out(xml):
     return '<!-- %s -->' % xml
+
 
 def make_section(tag_name, rows):
     """
     Make a string in XML format for a section with a given tag name.
     """
     return '\n'.join(indent(make_tag_from_row(tag_name, r)) for r in rows)
+
 
 def make_tag_from_row(name, row):
     """
@@ -329,25 +340,31 @@ def make_tag_from_row(name, row):
     if isinstance(row, tuple):
         return make_tag(name, attrs_dict=row[1], contents=row[0])
 
+
 def make_tag(name, attrs_dict, contents):
     return '<%s>%s</%s>' % (space_join([name, dict_to_attrs(attrs_dict)]),
                             contents,
                             name)
 
+
 def make_empty_tag(name, attrs_dict):
     return '<%s/>' % space_join([name, dict_to_attrs(attrs_dict)])
+
 
 def space_join(words):
     return ' '.join(w for w in words if w)
 
+
 def indent(s, n=1):
     return (n * '  ') + s
+
 
 def dict_to_attrs(d):
     """
     Convert a dictionary to a string containing attributes in XML format.
     """
     return ' '.join('%s="%s"' % (k, v) for k, v in d.items())
+
 
 def make_exports_section(exports, architecture_independent, metapackage):
     parts = [make_empty_tag(name, attrs_dict)
@@ -359,6 +376,6 @@ def make_exports_section(exports, architecture_independent, metapackage):
     parts = [indent(p, n=2) for p in parts]
     return '\n'.join(parts)
 
+
 if __name__ == '__main__':
     main()
-
