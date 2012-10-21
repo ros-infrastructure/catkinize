@@ -94,7 +94,6 @@ find_package(catkin REQUIRED)
 #    DEPENDS otherpkg)
 
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
-
 ''' % project_name
     return header.strip().splitlines()
 
