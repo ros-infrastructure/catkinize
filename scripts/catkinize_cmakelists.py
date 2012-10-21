@@ -108,18 +108,20 @@ def convert_line(line):
     return line
 
 
+LINK_BOOST_RX = re.compile(r'[ ]*rosbuild_link_boost\(([^ ]+)\s+([^)]+)\)')
+
+
 def convert_boost(lines):
     """
     convert_cmakelists Boost sections.
     """
-    link_boost_rx = re.compile(r'rosbuild_link_boost\(([^ ]+)\s+([^)]+)\)')
     for l in lines:
         if 'rosbuild_add_boost_directories' in l:
             # These lines are no longer needed.
             continue
         elif 'rosbuild_link_boost' in l:
             # rosbuild_link_boost lines expand to multiple statements.
-            m = link_boost_rx.match(l)
+            m = LINK_BOOST_RX.match(l)
             target = m.group(1)
             components = m.group(2)
             yield 'find_package(Boost REQUIRED COMPONENTS %s)' % components
