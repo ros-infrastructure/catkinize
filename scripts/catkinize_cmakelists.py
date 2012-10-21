@@ -64,8 +64,8 @@ def convert_cmakelists(project_name, lines):
     """
     Catkinize the lines of a file as much as we can without manual intervention.
     """
-    lines = map(convert_line, lines)
     lines = list(convert_boost(lines))
+    lines = map(convert_line, lines)
     lines = add_header_if_needed(lines, make_header_lines(project_name))
     return lines
 
