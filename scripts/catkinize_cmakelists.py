@@ -66,7 +66,7 @@ def convert_cmakelists(project_name, lines):
     """
     lines = map(convert_line, lines)
     lines = list(convert_boost(lines))
-    lines = add_header_if_needed(lines, make_header_lines(lines, project_name))
+    lines = add_header_if_needed(lines, make_header_lines(project_name))
     return lines
 
 
@@ -76,7 +76,7 @@ def add_header_if_needed(lines, header):
     return lines
 
 
-def make_header_lines(lines, project_name):
+def make_header_lines(project_name):
     """
     Make top lines of CMakeLists file according to
     http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
