@@ -126,6 +126,9 @@ def convert_boost(lines):
         if 'rosbuild_add_boost_directories' in line:
             # These lines are no longer needed.
             continue
+        if 'rosbuild_init' in line:
+            # These lines are no longer needed.
+            continue
         elif 'rosbuild_link_boost' in line:
             # rosbuild_link_boost lines expand to multiple statements.
             m = LINK_BOOST_RX.match(line)
