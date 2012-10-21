@@ -1,18 +1,13 @@
 import os
-import sys
 import unittest
-import tempfile
-import shutil
-
-import mock
-
 
 import imp
 imp.load_source('catkinize_cmakelists',
                 os.path.join(os.path.dirname(__file__),
                              '..', 'scripts', 'catkinize_cmakelists.py'))
 
-from catkinize_cmakelists import main, convert_cmakelists, add_header_if_needed, make_header_lines, convert_line, convert_boost, LINK_BOOST_RX
+from catkinize_cmakelists import convert_cmakelists, add_header_if_needed, make_header_lines, convert_line, convert_boost, LINK_BOOST_RX
+
 
 class CatkinizeCmakeTest(unittest.TestCase):
 
@@ -95,6 +90,3 @@ baz
         lines = ['foo', 'rosbuild_link_boost(foo', 'bar' 'baz)']
         line_gen = convert_boost(lines)
         self.assertRaises(ValueError, list, line_gen)
-
-    def test_main(self):
-        pass
