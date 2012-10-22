@@ -1,13 +1,6 @@
 import os
-import sys
 import unittest
-import tempfile
-import shutil
-
-import mock
-
 import StringIO
-
 
 import imp
 imp.load_source('catkinize_cmakelists',
