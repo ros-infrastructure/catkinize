@@ -45,7 +45,7 @@ conversions = [
 ]
 
 
-def main(argv = sys.argv[1:], outstream=sys.stdout):
+def main(argv, outstream):
     """
     reads file and prints converted file to stdout
     """
@@ -145,4 +145,5 @@ def convert_boost(lines):
 
 
 if __name__ == '__main__':
-    main()
+    main(argv=sys.argv[1:], outstream=sys.stdout)
+
