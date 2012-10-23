@@ -50,32 +50,42 @@ class CatkinizeCmakeTest(unittest.TestCase):
         self.assertTrue('catkin_package(' in lines, lines)
         self.assertTrue('project(foo)' in lines, lines)
 
-    def test_link_boost_re(self):
+    def test_link_boost_re_single_line(self):
         orig = "rosbuild_link_boost(foo bar)"
         m = LINK_BOOST_RX.match(orig)
         self.assertEqual(orig, m.string)
-        orig = """rosbuild_link_boost(foo
+
+    def test_link_boost_re_multi_line(self):
+        orig = """\
+rosbuild_link_boost(foo
 bar
 baz)"""
         m = LINK_BOOST_RX.match(orig)
         self.assertEqual(orig, m.string)
-        orig = """rosbuild_link_boost(foo
+        orig = """\
+rosbuild_link_boost(foo
 bar
 baz
 )"""
         m = LINK_BOOST_RX.match(orig)
         self.assertEqual(orig, m.string)
-        orig = """  rosbuild_link_boost(foo
+
+    def test_link_boost_re_indent(self):
+
+        orig = """\
+  rosbuild_link_boost(foo
     bar
     baz
   )"""
         m = LINK_BOOST_RX.match(orig)
         self.assertEqual(orig, m.string)
 
-    def test_convert_boost(self):
+    def test_convert_boost_none(self):
         lines = ['foo', 'rosbuild_add_boost_directories()', 'baz']
         result_lines = list(convert_boost(lines))
         self.assertEqual(['foo', 'baz'], result_lines)
+
+    def test_convert_boost_many(self):
         lines = ['foo', 'rosbuild_link_boost(foo bar baz)', 'baz']
         result_lines = list(convert_boost(lines))
         expect = ['foo',
@@ -84,6 +94,8 @@ baz
                   'target_link_libraries(foo ${Boost_LIBRARIES})',
                   'baz']
         self.assertEqual(expect, result_lines)
+
+    def test_convert_boost_multiline(self):
         lines = ['foo', 'rosbuild_link_boost(foo', 'bar' 'baz)']
         line_gen = convert_boost(lines)
         self.assertRaises(ValueError, list, line_gen)
