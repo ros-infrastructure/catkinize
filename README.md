@@ -61,9 +61,3 @@ be found
 The specification for package.xml files is in [REP
 127](http://www.ros.org/reps/rep-0127.html).
 
-Testing
--------
-
-Run all unittests using:
-
-$ nosetests --with-doctest scripts test
