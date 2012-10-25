@@ -2,6 +2,14 @@
 
 from setuptools import setup
 
+# Prevent "TypeError: 'NoneType' object is not callable" error
+# when running python setup.py test 
+# (see http://www.eby-sarna.com/pipermail/peak/2010-May/003357.html)
+try:
+    import multiprocessing
+except ImportError:
+    pass
+
 setup(name='catkinize',
       version='0.1',
       description='Scripts to convert rosbuild projects to catkin',
@@ -12,3 +20,4 @@ setup(name='catkinize',
                'scripts/catkinize_cmakelists.py'],
       test_suite='nose.collector',
       tests_require=['nose'])
+
