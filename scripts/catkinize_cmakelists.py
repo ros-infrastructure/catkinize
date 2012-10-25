@@ -133,7 +133,7 @@ def convert_boost(lines):
             # rosbuild_link_boost lines expand to multiple statements.
             m = LINK_BOOST_RX.match(line)
             if not m:
-                raise ValueError('Could not recognize rosbuild_link_boost statement starting in line %s (maybe multi-line?): \n%s' % (count, line))
+                raise ValueError('Could not recognize rosbuild_link_boost statement starting at line %s (maybe multi-line?): \n%s' % (count+1, line))
             target = m.group(1)
             components = m.group(2)
             yield 'find_package(Boost REQUIRED COMPONENTS %s)' % components
