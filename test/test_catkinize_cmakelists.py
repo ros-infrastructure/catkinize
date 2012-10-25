@@ -40,6 +40,11 @@ class CatkinizeCmakeTest(unittest.TestCase):
                       'endtest']
         self.assertEqual(expect_end, result_lines[-8:])
 
+    def test_convert_cmakelists_handles_commented_lines_with_rosbuild_link_boost(self):
+        line = '#rosbuild_link_boost(${PROJECT_NAME} thread)'
+        result_lines = convert_cmakelists('project_name', [line])
+        self.assertEqual(line, result_lines[-1])
+
     def test_make_header_lines(self):
         lines = make_header_lines('foo')
         self.assertTrue('# catkin_package(' in lines, lines)
