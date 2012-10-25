@@ -115,6 +115,7 @@ def convert_line(line):
     return line
 
 
+COMMENT_RX = re.compile('#.*')
 LINK_BOOST_RX = re.compile(r'[ ]*rosbuild_link_boost\(([^ ]+)\s+([^)]+)\)')
 
 
@@ -123,15 +124,16 @@ def convert_boost(lines):
     convert_cmakelists Boost sections.
     """
     for count, line in enumerate(lines):
-        if 'rosbuild_add_boost_directories' in line:
+        line2 = COMMENT_RX.sub('', line)
+        if 'rosbuild_add_boost_directories' in line2:
             # These lines are no longer needed.
             continue
-        if 'rosbuild_init' in line:
+        if 'rosbuild_init' in line2:
             # These lines are no longer needed.
             continue
-        elif 'rosbuild_link_boost' in line:
+        elif 'rosbuild_link_boost' in line2:
             # rosbuild_link_boost lines expand to multiple statements.
-            m = LINK_BOOST_RX.match(line)
+            m = LINK_BOOST_RX.match(line2)
             if not m:
                 raise ValueError('Could not recognize rosbuild_link_boost statement starting at line %s (maybe multi-line?): \n%s' % (count+1, line))
             target = m.group(1)

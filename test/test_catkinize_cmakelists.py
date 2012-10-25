@@ -43,7 +43,7 @@ class CatkinizeCmakeTest(unittest.TestCase):
     def test_convert_cmakelists_handles_commented_lines_with_rosbuild_link_boost(self):
         line = '#rosbuild_link_boost(${PROJECT_NAME} thread)'
         result_lines = convert_cmakelists('project_name', [line])
-        self.assertEqual(line, result_lines[-1])
+        self.assertEqual('#link_boost(${PROJECT_NAME} thread)', result_lines[-1])
 
     def test_make_header_lines(self):
         lines = make_header_lines('foo')
