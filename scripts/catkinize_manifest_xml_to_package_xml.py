@@ -36,6 +36,8 @@ from optparse import OptionParser
 import re
 import xml.etree.ElementTree as ET
 
+from catkinize import xml_lib
+
 SPACE_COMMA_RX = re.compile(r',\s*')
 
 
@@ -143,16 +145,16 @@ def make_from_manifest(manifest_xml_str,
     >>> pkg = ET.XML(pkg_xml)
     """
     manifest = ET.XML(manifest_xml_str)
-    description = xml_find(manifest, 'description').text.strip()
-    authors_str = xml_find(manifest, 'author').text
+    description = xml_lib.xml_find(manifest, 'description').text.strip()
+    authors_str = xml_lib.xml_find(manifest, 'author').text
     authors = parse_authors_field(authors_str)
-    licenses_str = xml_find(manifest, 'license').text
+    licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
-    website_url = xml_find(manifest, 'url').text
+    website_url = xml_lib.xml_find(manifest, 'url').text
     maintainers = authors
     depend_tags = manifest.findall('depend')
     depends = [d.attrib['package'] for d in depend_tags]
-    export_tags = xml_find(manifest, 'export').getchildren()
+    export_tags = xml_lib.xml_find(manifest, 'export').getchildren()
     exports = [(e.tag, e.attrib) for e in export_tags]
 
     xml = create_project_xml(package_name=package_name,
@@ -173,42 +175,10 @@ def make_from_manifest(manifest_xml_str,
                              metapackage=metapackage)
 
     for name in 'maintainer build_depend run_depend test_depend'.split():
-        xml = comment_out_tags_named(xml, name)
+        xml = xml_lib.comment_out_tags_named(xml, name)
 
     return xml
 
-
-def xml_find(tree, tag_name):
-    """
-    Return the first node with the given tag name, or Empty if none is found.
-    """
-    item = tree.find(tag_name)
-    return item if item is not None else Empty()
-
-
-class Empty(object):
-    """Empty result of a find operation on an XML tree."""
-    def __init__(self):
-        self.text = ''
-
-    def getchildren(self):
-        return []
-
-
-def comment_out_tags_named(xml, tag_name):
-    """
-    Comment out all tags with a given name.
-
-    >>> comment_out_tags_named('<a/><b/><c></c><b q="foo">bop</b><d>', 'b')
-    '<a/><!-- <b/> --><c></c><!-- <b q="foo">bop</b> --><d>'
-    """
-    rx1 = re.compile('(\\b%s/>)' % tag_name)
-    rx2 = re.compile('(<%s\\b)' % tag_name)
-    rx3 = re.compile('(</%s>)' % tag_name)
-    xml = rx1.sub(r'\1 -->', xml)
-    xml = rx2.sub(r'<!-- \1', xml)
-    xml = rx3.sub(r'\1 -->', xml)
-    return xml
 
 
 def parse_authors_field(authors_str):

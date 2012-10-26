@@ -37,6 +37,7 @@ from __future__ import print_function
 import re
 import sys
 import argparse
+import xml.etree.ElementTree as ET
 
 conversions = [
     ('rosbuild_add_gtest', 'catkin_add_gtest'),
@@ -56,6 +57,9 @@ def main(argv, outstream):
     parser.add_argument('cmakelists_path',
                         nargs=1,
                         help='path to the CMakeLists.txt')
+    parser.add_argument('manifest_xml_path',
+                        nargs=1,
+                        help='path to the manifest.xml')
     # Parse args
     args = parser.parse_args(argv)
 
@@ -63,8 +67,30 @@ def main(argv, outstream):
     print('Converting %s' % args.cmakelists_path, file=sys.stderr)
     with open(args.cmakelists_path[0], 'r') as f_in:
         lines = f_in.read().splitlines()
-    for line in convert_cmakelists(args.project_name[0], lines):
+    lines = convert_cmakelists(args.project_name[0], lines)
+    project_name = args.project_name[0]
+    dependencies_str = ' '.join(get_dependencies(args.manifest_xml_path[0]))
+    header = make_header_lines(project_name, dependencies_str)
+    lines = header + [''] + lines if header_is_needed(lines) else lines
+    for line in lines:
         print(line, file=outstream)
+
+
+def get_dependencies(manifest_path):
+    '''
+    Given a path to a manifest.xml file, get_dependencies() parses the file and
+    yields all dependencies listed in it.
+    '''
+    with open(manifest_path) as file:
+        tree = ET.XML(file.read())
+        for tag in tree.findall('depend'):
+            pkg = tag.attrib.get('package')
+            if pkg:
+                yield pkg
+        for tag in tree.findall('rosdep'):
+            pkg = tag.attrib.get('name')
+            if pkg:
+                yield pkg
 
 
 def convert_cmakelists(project_name, lines):
@@ -73,21 +99,23 @@ def convert_cmakelists(project_name, lines):
     """
     lines = list(convert_boost(lines))
     lines = map(convert_line, lines)
-    lines = add_header_if_needed(lines, make_header_lines(project_name))
     return lines
 
 
-def add_header_if_needed(lines, header):
-    if not [l for l in lines if 'catkin_package' in l]:
-        return header + [''] + lines
-    return lines
+def header_is_needed(lines):
+    """
+    header_is_needed tells whether a given list of lines should probably have a
+    header prepended to it.
+    """
+    return not [l for l in lines if 'catkin_package' in l]
 
 
-def make_header_lines(project_name):
+def make_header_lines(project_name, deps_str):
     """
     Make top lines of CMakeLists file according to
     http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
     """
+    full_deps_str = 'DEPENDS %s' % deps_str if deps_str.strip() else ''
     header = '''
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
@@ -95,13 +123,12 @@ project(%s)
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED)
 
-# catkin_package(
-#    INCLUDE_DIRS include
-#    LIBRARIES ${PROJECT_NAME}
-#    DEPENDS otherpkg)
+catkin_package(%s
+    INCLUDE_DIRS include
+    LIBRARIES ${PROJECT_NAME})
 
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
-''' % project_name
+''' % (project_name, full_deps_str)
     return header.strip().splitlines()
 
 

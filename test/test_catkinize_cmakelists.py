@@ -1,4 +1,5 @@
 import os
+import StringIO
 import unittest
 
 import imp
@@ -6,7 +7,9 @@ imp.load_source('catkinize_cmakelists',
                 os.path.join(os.path.dirname(__file__),
                              '..', 'scripts', 'catkinize_cmakelists.py'))
 
-from catkinize_cmakelists import convert_cmakelists, add_header_if_needed, make_header_lines, convert_line, convert_boost, LINK_BOOST_RX
+from catkinize_cmakelists import convert_cmakelists, \
+    make_header_lines, convert_line, convert_boost, LINK_BOOST_RX, main
+from utils import create_temp_file
 
 
 class CatkinizeCmakeTest(unittest.TestCase):
@@ -24,11 +27,8 @@ class CatkinizeCmakeTest(unittest.TestCase):
                  'rosbuild_link_boost(fooz baaz)',
                  'endtest']
         result_lines = convert_cmakelists('myprojecttest', lines)
-        self.assertEqual(21, len(result_lines))
-        self.assertTrue('catkin_add_gtest(bar)' in result_lines)
-        self.assertFalse('rosbuild_add_gtest(bar)' in result_lines)
-        self.assertTrue('project(myprojecttest)' in result_lines)
-        self.assertTrue('# catkin_package(' in result_lines)
+        self.assertTrue('catkin_add_gtest(bar)' in result_lines, result_lines)
+        self.assertFalse('rosbuild_add_gtest(bar)' in result_lines, result_lines)
         # don't care too much about header contents in this test
         expect_end = ['foo',
                       'baz',
@@ -46,17 +46,9 @@ class CatkinizeCmakeTest(unittest.TestCase):
         self.assertEqual('#link_boost(${PROJECT_NAME} thread)', result_lines[-1])
 
     def test_make_header_lines(self):
-        lines = make_header_lines('foo')
-        self.assertTrue('# catkin_package(' in lines, lines)
+        lines = make_header_lines('foo', '')
+        self.assertTrue('catkin_package(' in lines, lines)
         self.assertTrue('project(foo)' in lines, lines)
-
-    def test_add_header_if_needed(self):
-        lines = ['foo', 'bar']
-        result_lines = add_header_if_needed(lines, ['head'])
-        self.assertEqual(['head', '', 'foo', 'bar'], result_lines)
-        lines = ['cmake_minimum_required(VERSION 2.8.3)', 'project(foo)', 'find_package(catkin REQUIRED)', 'catkin_package()']
-        result_lines = add_header_if_needed(lines, ['head'])
-        self.assertEqual(lines, result_lines)
 
     def test_link_boost_re(self):
         orig = "rosbuild_link_boost(foo bar)"
@@ -95,3 +87,39 @@ baz
         lines = ['foo', 'rosbuild_link_boost(foo', 'bar' 'baz)']
         line_gen = convert_boost(lines)
         self.assertRaises(ValueError, list, line_gen)
+
+    def test_that_manifest_dependencies_are_included(self):
+        package_name = 'my_package'
+
+        # Make a CMakeLists.txt file.
+        cmakelists_path = create_temp_file(contents='')
+
+        # Make a manifest.xml file.
+        manifest_path = create_temp_file(contents='''
+<package>
+  <depend package="pkg_a"/>
+  <depend package="pkg_b"/>
+  <rosdep name="pkg_c" />
+  <rosdep name="pkg_d" />
+</package>
+''')
+        output = StringIO.StringIO()
+
+        # Run the catkinize script.
+        main([package_name, cmakelists_path, manifest_path], output)
+
+        # Check that dependencies are listed.
+        out_lines = output.getvalue().splitlines()
+        cpkg_lines = [l for l in out_lines if 'catkin_package' in l]
+        self.assertEqual(1, len(cpkg_lines), str(cpkg_lines))
+        cpkg_line = cpkg_lines[0]
+        pattern = 'DEPENDS pkg_a pkg_b pkg_c pkg_d'
+        msg = '''
+    Failed to find package dependencies in the catkin_package() call:
+    Expected to find a line containing
+    %s
+    but got
+    %s
+''' % (pattern, cpkg_line)
+        self.assertTrue(pattern in cpkg_line, msg)
+

@@ -28,7 +28,7 @@ Example
 
 	# Convert CMakeLists.txt
 	mv CMakeLists.txt CMakeLists.old
-	catkinize_cmakelists.py filters CMakeLists.old > CMakeLists.txt
+	catkinize_cmakelists.py filters CMakeLists.old manifest.xml > CMakeLists.txt
 	gcam 'Run catkinize_cmakelists'
 	$EDITOR CMakeLists.txt  # Make any changes needed
 	gcam 'More Catkinization of CMakeLists'

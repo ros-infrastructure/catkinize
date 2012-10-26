@@ -8,6 +8,7 @@ imp.load_source('catkinize_cmakelists',
                              '..', 'scripts', 'catkinize_cmakelists.py'))
 
 from catkinize_cmakelists import main
+from utils import create_temp_file
 
 
 class CatkinizeCmakeFixturesTest(unittest.TestCase):
@@ -22,7 +23,8 @@ class CatkinizeCmakeFixturesTest(unittest.TestCase):
             infile = os.path.join(os.path.dirname(__file__), 'fixtures', 'CMakeLists.%s.txt.in' % case)
             outfile = os.path.join(os.path.dirname(__file__), 'fixtures', 'CMakeLists.%s.txt.out' % case)
             result_buf = StringIO.StringIO()
-            main(['foo', infile], outstream=result_buf)
+            manifest = create_temp_file(contents='<package/>')
+            main(['foo', infile, manifest], outstream=result_buf)
             with open(outfile, 'r') as fhand:
                 expect = fhand.read()
             self.compare_contents(outfile, expect, result_buf.getvalue())

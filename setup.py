@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Prevent "TypeError: 'NoneType' object is not callable" error
 # when running python setup.py test 
@@ -18,6 +18,7 @@ setup(name='catkinize',
       url='https://github.com/ijt/catkinize',
       scripts=['scripts/catkinize_manifest_xml_to_package_xml.py',
                'scripts/catkinize_cmakelists.py'],
+      packages=find_packages(exclude=("tests",)),
       test_suite='nose.collector',
       tests_require=['nose'])
 
