@@ -1,0 +1,22 @@
+<package>
+<description brief="Foo"></description>
+<author></author>
+<license>GPL</license>
+<review status="Doc reviewed" notes=""/>
+<url>http://foo.bar/baz</url>
+<versioncontrol type="svn" url="https://ros.org/foo"/>
+
+  <depend package="roscpp" />
+  <depend package="std_msgs" />
+
+  <export>
+    <cpp cflags="`PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:$PKG_CONFIG_PATH pkg-config --cflags stage`"
+         lflags="`PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:$PKG_CONFIG_PATH pkg-config --libs stage`"/>
+  </export>
+
+<rosdep name="fltk"/>
+<rosdep name="pkg-config"/>
+<platform os="ubuntu" version="9.04"/>
+<platform os="ubuntu" version="9.10"/>
+<platform os="ubuntu" version="10.04"/>
+</package>

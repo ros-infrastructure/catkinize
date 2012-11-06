@@ -9,9 +9,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 rosbuild_add_boost_directories()
 
-rosbuild_add_executable(robot_pose_ekf 
-                       src/odom_estimation.cpp 
-                       src/nonlinearanalyticconditionalgaussianodo.cpp 
+rosbuild_add_executable(robot_pose_ekf
+                       src/odom_estimation.cpp
+                       src/nonlinearanalyticconditionalgaussianodo.cpp
                        src/odom_estimation_node.cpp)
 rosbuild_link_boost(robot_pose_ekf thread)
 
