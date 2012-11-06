@@ -39,11 +39,53 @@ import sys
 import argparse
 import xml.etree.ElementTree as ET
 
+# removals and stuff we can replace
 conversions = [
+    ('rosbuild_init', None),
+    ('rosbuild_add_boost_directories', None),
+    ('rosbuild_add_gtest_build_flags', None),
+    ('rosbuild_add_rostest', None),
     ('rosbuild_add_gtest', 'catkin_add_gtest'),
     ('rosbuild_add_pyunit', 'catkin_add_nosetests'),
-    ('rosbuild_', '')
+    ('rosbuild_genmsg', 'generate_messages'),
+    ('rosbuild_gensrv', 'generate_messages'),
+    ('rosbuild_add_executable', 'add_executable'),
+    ('rosbuild_add_library', 'add_library'),
+    ('rosbuild_download_test_data', 'download_test_data'),
+#    ('rosbuild_', '')
 ]
+
+substitutions = [
+    ('rosbuild_add_openmp_flags()', 'find_package(OpenMP)')]
+
+# stuff that the user has to fix maunally
+manual_conversions = [
+    ('rosbuild_add_link_flags', '# use link_directories() include_directories(), add_definitions(), target_link_libraries() or set_target_properties'),
+    ('rosbuild_remove_link_flags', '# use link_directories() include_directories(), add_definitions(), target_link_libraries() or set_target_properties'),
+    ('rosbuild_add_compile_flags', '# use link_directories() include_directories(), add_definitions(), target_link_libraries() or set_target_properties'),
+    ('rosbuild_remove_compile_flags', '# use link_directories() include_directories(), add_definitions(), target_link_libraries() or set_target_properties'),
+    ('rosbuild_check_for_sse', '# Find other way to find SSE'),
+    ('rosbuild_include', '# use include(module) after finding the path'),
+    ('rosbuild_add_swigpy_library', '# find swigpy in some other way'),
+    ('rosbuild_make_distribution', '# use bloom tool')
+    ]
+
+# adding ^ to the beginning of the re would discard all commented lines
+FUNCALL_PATTERN = re.compile(r'([ ]*[a-zA-Z][a-zA-Z_]+)(\s*\([^)]*\))', re.MULTILINE)
+
+
+def chunks(l, n):
+    """
+    returns a list of n-szed chunks of list l
+
+    >>> chunks([], 3)
+    []
+    >>> chunks([2, 5, 7], 3)
+    [[2, 5, 7]]
+    >>> chunks([2, 5, 7, 4, 6, 8], 3)
+    [[2, 5, 7], [4, 6, 8]]
+    """
+    return [l[i:i+n] for i in range(0, len(l), n)]
 
 
 def main(argv, outstream):
@@ -66,14 +108,53 @@ def main(argv, outstream):
     # Convert CMakeLists.txt
     print('Converting %s' % args.cmakelists_path, file=sys.stderr)
     with open(args.cmakelists_path[0], 'r') as f_in:
-        lines = f_in.read().splitlines()
-    lines = convert_cmakelists(args.project_name[0], lines)
-    project_name = args.project_name[0]
+        content = f_in.read()
     dependencies_str = ' '.join(get_dependencies(args.manifest_xml_path[0]))
-    header = make_header_lines(project_name, dependencies_str)
-    lines = header + [''] + lines if header_is_needed(lines) else lines
-    for line in lines:
-        print(line, file=outstream)
+
+    # anything that looks like a macro or function call (broken for nested round parens)
+    tokens = FUNCALL_PATTERN.split(content)
+
+    # storing the originals allows interactive mode where user confirms each change
+    result = tokens[:1]
+    original = tokens[:1]
+    boost_components = set()
+
+    # find replacement for each snippet. Chunks are (funcall, argslist, otherlines)
+    first_boost = -1
+    for count, (name, fun_args, rest) in enumerate(chunks(tokens[1:], 3)):
+        oldsnippet = '%s%s' % (name, fun_args)
+        original.append(oldsnippet)
+        newsnippet, components = convert_boost_snippet(name, fun_args)
+        if newsnippet is None:
+            newsnippet = convert_snippet(name, fun_args)
+            if newsnippet != oldsnippet:
+                result.append(newsnippet)
+            else:
+                result.append(None)
+        else:
+            if first_boost < 0:
+                first_boost = count * 2 + 1
+            boost_components = boost_components.union(components)
+            result.append(newsnippet)
+
+
+        result.append(None)
+        original.append(rest)
+
+    if boost_components:
+        # reverse order due to insert
+        result.insert(first_boost, 'include_directories(${Boost_INCLUDE_DIRS})\n')
+        result.insert(first_boost, 'find_package(Boost REQUIRED COMPONENTS %s)\n' % ' '.join(boost_components))
+        original.insert(first_boost, '')
+        original.insert(first_boost, '')
+
+    lines = content.splitlines()
+    if not [l for l in lines if 'catkin_package' in l]:
+        print('\n'.join(make_header_lines(args.project_name[0], dependencies_str)), file=outstream)
+
+    for (old_snippet, new_snippet) in zip(original, result):
+        if old_snippet or new_snippet:
+            outstream.write(new_snippet or old_snippet)
 
 
 def get_dependencies(manifest_path):
@@ -91,23 +172,6 @@ def get_dependencies(manifest_path):
             pkg = tag.attrib.get('name')
             if pkg:
                 yield pkg
-
-
-def convert_cmakelists(project_name, lines):
-    """
-    Catkinize the lines of a file as much as we can without manual intervention.
-    """
-    lines = list(convert_boost(lines))
-    lines = map(convert_line, lines)
-    return lines
-
-
-def header_is_needed(lines):
-    """
-    header_is_needed tells whether a given list of lines should probably have a
-    header prepended to it.
-    """
-    return not [l for l in lines if 'catkin_package' in l]
 
 
 def make_header_lines(project_name, deps_str):
@@ -132,45 +196,62 @@ catkin_package(%s
     return header.strip().splitlines()
 
 
-def convert_line(line):
+def convert_snippet(name, funargs):
     """
-    Do all replacements that can be done for a single line without looking at
+    Do all replacements that can be done for a single snippet without looking at
     anything else.
     """
+    snippet = '%s%s' % (name, funargs)
+    converted = False
     for a, b in conversions:
-        line = line.replace(a, b)
-    return line
+        if a == name.strip():
+            if b is not None:
+                snippet = snippet.replace(a, b)
+            else:
+                snippet = comment(snippet, '# CATKIN_MIGRATION\n# removed during catkin migration')
+            converted = True
+            break
+    if not converted:
+        for a, b in manual_conversions:
+            if a == name.strip():
+                snippet = comment(snippet, '# CATKIN_MIGRATION\n%s' % b)
+                converted = True
+                break
+    return snippet
 
 
-COMMENT_RX = re.compile('#.*')
-LINK_BOOST_RX = re.compile(r'[ ]*rosbuild_link_boost\(([^ ]+)\s+([^)]+)\)')
+def comment(snippet, header):
+    """
+    comments out a snippet and adds a comment saying so
+    >>> comment('foo(bar)', '# gone')
+    '# gone\\n# foo(bar)'
+    """
+    result = []
+    if header:
+        result.append(header)
+    for line in snippet.splitlines():
+        result.append('# %s' % line)
+    return '\n'. join(result)
 
 
-def convert_boost(lines):
+# separates target from components
+ARGUMENT_SPLITTER = re.compile(r'\s*\(\s*([^\s]+)\s+([^)]+)\)')
+
+
+def convert_boost_snippet(name, args):
     """
     convert_cmakelists Boost sections.
     """
-    for count, line in enumerate(lines):
-        line2 = COMMENT_RX.sub('', line)
-        if 'rosbuild_add_boost_directories' in line2:
-            # These lines are no longer needed.
-            continue
-        if 'rosbuild_init' in line2:
-            # These lines are no longer needed.
-            continue
-        elif 'rosbuild_link_boost' in line2:
-            # rosbuild_link_boost lines expand to multiple statements.
-            m = LINK_BOOST_RX.match(line2)
-            if not m:
-                raise ValueError('Could not recognize rosbuild_link_boost statement starting at line %s (maybe multi-line?): \n%s' % (count+1, line))
-            target = m.group(1)
-            components = m.group(2)
-            yield 'find_package(Boost REQUIRED COMPONENTS %s)' % components
-            yield 'include_directories(${Boost_INCLUDE_DIRS})'
-            yield 'target_link_libraries(%s ${Boost_LIBRARIES})' % target
-        else:
-            # All other lines pass through unchanged.
-            yield line
+    realname = name.strip()
+    if realname == 'rosbuild_link_boost':
+        # rosbuild_link_boost snippets expand to multiple statements.
+        m = ARGUMENT_SPLITTER.match(args)
+        if not m:
+            raise ValueError('Could not recognize rosbuild_link_boost arguments (maybe multi-line?): \n%s' % args)
+        target = m.group(1)
+        components = m.group(2)
+        return "target_link_libraries(%s ${Boost_LIBRARIES})" % (target), components.split()
+    return None, None
 
 
 if __name__ == '__main__':
