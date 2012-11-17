@@ -33,6 +33,7 @@
 
 from __future__ import print_function
 from optparse import OptionParser
+import logging
 import re
 import xml.etree.ElementTree as ET
 
@@ -42,6 +43,7 @@ SPACE_COMMA_RX = re.compile(r',\s*')
 
 
 def main():
+    logging.basicConfig(format='%(levelname)s - %(message)s')
     usage = 'usage: %prog [options] manifest_xml_path package_name version'
     parser = OptionParser(usage)
     parser.add_option('-a', '--architecture_independent',
@@ -73,18 +75,23 @@ def main():
     manifest_xml_path = args[0]
     package_name = args[1]
     version = args[2]
-    with open(manifest_xml_path) as f:
-        manifest_xml_str = f.read()
-        pkg_xml = make_from_manifest(manifest_xml_str,
-                                     package_name,
-                                     version,
-                                     options.architecture_independent,
-                                     options.metapackage,
-                                     options.bugtracker_url,
-                                     options.replaces,
-                                     options.conflicts)
-        pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
-        print(pkg_xml)
+    try:
+        with open(manifest_xml_path) as f:
+            manifest_xml_str = f.read()
+            pkg_xml = make_from_manifest(manifest_xml_str,
+                                         package_name,
+                                         version,
+                                         options.architecture_independent,
+                                         options.metapackage,
+                                         options.bugtracker_url,
+                                         options.replaces,
+                                         options.conflicts)
+            pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
+            print(pkg_xml)
+    except ET.ParseError as e:
+        line_num = int(re.compile(r'.*line (\d+).*').match(str(e)).group(1))
+        line = manifest_xml_str.splitlines()[line_num-1]
+        logging.error('%s\n"%s"\n', e, line)
 
 
 def merge_dups(lines):
