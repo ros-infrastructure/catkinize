@@ -35,6 +35,7 @@ This script partially converts a CMakeLists.txt file from rosbuild to catkin.
 
 from __future__ import print_function
 import re
+import os
 import sys
 import argparse
 import xml.etree.ElementTree as ET
@@ -93,23 +94,35 @@ def main(argv, outstream):
     reads file and prints converted file to stdout
     """
     parser = argparse.ArgumentParser(description='Helper script to migrate rosbuild packages')
-    parser.add_argument('project_name',
-                        nargs=1,
-                        help='The name of the package')
+    parser.add_argument('project_path',
+                        nargs='?',
+                        default=None,
+                        help='The path to the package')
     parser.add_argument('cmakelists_path',
-                        nargs=1,
+                        nargs='?',
+                        default=None,
                         help='path to the CMakeLists.txt')
     parser.add_argument('manifest_xml_path',
-                        nargs=1,
+                        nargs='?',
+                        default=None,
                         help='path to the manifest.xml')
     # Parse args
     args = parser.parse_args(argv)
+    project_path = args.project_path or os.getcwd()
+    project_name = os.path.basename(project_path)
 
     # Convert CMakeLists.txt
-    print('Converting %s' % args.cmakelists_path, file=sys.stderr)
-    with open(args.cmakelists_path[0], 'r') as f_in:
+    convert(project_name,
+            args.cmakelists_path or os.path.join(project_path, 'CMakeLists.txt'),
+            args.manifest_xml_path or os.path.join(project_path, 'manifest.xml'),
+            outstream)
+
+def convert(project_name, cmakelists_path, manifest_xml_path, outstream):
+    print('Converting %s' % cmakelists_path, file=sys.stderr)
+    with open(cmakelists_path, 'r') as f_in:
         content = f_in.read()
-    dependencies_str = ' '.join(get_dependencies(args.manifest_xml_path[0]))
+
+    dependencies_str = ' '.join(get_dependencies(manifest_xml_path))
 
     # anything that looks like a macro or function call (broken for nested round parens)
     tokens = FUNCALL_PATTERN.split(content)
@@ -150,7 +163,7 @@ def main(argv, outstream):
 
     lines = content.splitlines()
     if not [l for l in lines if 'catkin_package' in l]:
-        print('\n'.join(make_header_lines(args.project_name[0], dependencies_str)), file=outstream)
+        print('\n'.join(make_header_lines(project_name, dependencies_str)), file=outstream)
 
     for (old_snippet, new_snippet) in zip(original, result):
         if old_snippet or new_snippet:
