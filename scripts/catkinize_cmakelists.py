@@ -43,6 +43,8 @@ import xml.etree.ElementTree as ET
 # removals and stuff we can replace
 conversions = [
     ('rosbuild_init', None),
+    ('cmake_minimum_required', None),
+    ('include', None),
     ('rosbuild_add_boost_directories', None),
     ('rosbuild_add_gtest_build_flags', None),
     ('rosbuild_add_rostest', None),
