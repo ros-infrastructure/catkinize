@@ -2,12 +2,7 @@ import os
 import StringIO
 import unittest
 
-import imp
-imp.load_source('catkinize_cmakelists',
-                os.path.join(os.path.dirname(__file__),
-                             '..', 'scripts', 'catkinize_cmakelists.py'))
-
-from catkinize_cmakelists import make_header_lines, convert_snippet, convert_boost_snippet, ARGUMENT_SPLITTER, FUNCALL_PATTERN
+from catkinize.convert_cmake import make_header_lines, convert_snippet, convert_boost_snippet, ARGUMENT_SPLITTER, FUNCALL_PATTERN
 
 
 class CatkinizeCmakeTest(unittest.TestCase):
