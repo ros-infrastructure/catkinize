@@ -28,6 +28,7 @@
 
 
 from __future__ import print_function
+import os
 import logging
 import re
 import xml.etree.ElementTree as ET
@@ -38,10 +39,15 @@ SPACE_COMMA_RX = re.compile(r',\s*')
 
 
 
-def convert_manifest(package_name,
+def convert_manifest(package_path,
                      manifest_xml_path,
                      version,
-                     options):
+                     architecture_independent=False,
+                     metapackage=False,
+                     bugtracker_url='',
+                     replaces=[],
+                     conflicts=[]):
+    package_name = os.path.basename(os.path.abspath(package_path))
     logging.basicConfig(format='%(levelname)s - %(message)s')
     try:
         with open(manifest_xml_path) as f:
@@ -49,13 +55,13 @@ def convert_manifest(package_name,
             pkg_xml = make_from_manifest(manifest_xml_str,
                                          package_name,
                                          version,
-                                         options.architecture_independent,
-                                         options.metapackage,
-                                         options.bugtracker_url,
-                                         options.replaces,
-                                         options.conflicts)
+                                         architecture_independent,
+                                         metapackage,
+                                         bugtracker_url,
+                                         replaces,
+                                         conflicts)
             pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
-            print(pkg_xml)
+            return pkg_xml
     except ET.ParseError as e:
         line_num = int(re.compile(r'.*line (\d+).*').match(str(e)).group(1))
         line = manifest_xml_str.splitlines()[line_num-1]

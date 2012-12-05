@@ -30,7 +30,7 @@
 
 
 '''Script to generate package.xml from manifest.xml'''
-
+import os
 from optparse import OptionParser
 
 from catkinize.convert_manifest import convert_manifest
@@ -66,12 +66,16 @@ def main():
         parser.error('wrong number of arguments %s' % len(args))
 
     manifest_xml_path = args[0]
-    package_name = args[1]
+    # package_name = args[1]
     version = args[2]
-    convert_manifest(package_name,
-                     manifest_xml_path,
-                     version,
-                     options)
+    print(convert_manifest(os.path.dirname(manifest_xml_path),
+                           manifest_xml_path,
+                           version,
+                           options.architecture_independent,
+                           options.metapackage,
+                           options.bugtracker_url,
+                           options.replaces,
+                           options.conflicts))
 
 
 if __name__ == '__main__':
