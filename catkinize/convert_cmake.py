@@ -85,7 +85,13 @@ def chunks(l, n):
     return [l[i:i+n] for i in range(0, len(l), n)]
 
 
-def convert_cmake(project_name, cmakelists_path, manifest_xml_path):
+def convert_cmake(project_path, cmakelists_path=None, manifest_xml_path=None):
+    project_name = os.path.basename(os.path.abspath(project_path))
+    if not cmakelists_path:
+        cmakelists_path = os.path.join(project_path, 'CMakeLists.txt')
+    if not manifest_xml_path:
+        manifest_xml_path = os.path.join(project_path, 'manifest.xml')
+
     print('Converting %s' % cmakelists_path, file=sys.stderr)
     with open(cmakelists_path, 'r') as f_in:
         content = f_in.read()

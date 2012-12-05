@@ -58,14 +58,13 @@ def main(argv, outstream):
     # Parse args
     args = parser.parse_args(argv)
     project_path = args.project_path or os.getcwd()
-    project_name = os.path.basename(project_path)
 
     # Convert CMakeLists.txt
     print(
         convert_cmake(
-            project_name,
-            args.cmakelists_path or os.path.join(project_path, 'CMakeLists.txt'),
-            args.manifest_xml_path or os.path.join(project_path, 'manifest.xml')),
+            project_path,
+            args.cmakelists_path,
+            args.manifest_xml_path),
         file=outstream)
 
 
