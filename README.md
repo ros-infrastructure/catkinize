@@ -18,19 +18,12 @@ Example
     # Next, check out a ROS stack that hasn't yet been converted to Catkin
     source ~/groovy_overlay/build/buildspace/setup.sh
     cd ~/groovy_overlay/src
-    hg clone https://kforge.ros.org/common/filters
-    cd filters
 
-    # Convert CMakeLists.txt
-    mv CMakeLists.txt CMakeLists.old
-    catkinize_cmakelists.py filters CMakeLists.old manifest.xml > CMakeLists.txt
+    hg clone https://kforge.ros.org/common/filters
+    catkinize_stack filters
+
     # now check and adapt the CMakeLists.txt with any text editor
     $EDITOR CMakeLists.txt  # Make any changes needed
-
-    # Convert manifest.xml to package.xml
-    catkinize_manifest_xml_to_package_xml.py manifest.xml filters 1.6.0 \
-      > package.xml
-
     # Edit package.xml:
     #  - Make sure there is a valid maintainer
     #  - Uncomment dependencies as needed
@@ -40,6 +33,13 @@ Example
     cd ~/groovy_overlay/build
     cmake ../src
     make
+
+    # delete the obsolete backup files once you don't need them anymore
+    cd ~/groovy_overlay/src/filters
+    # check those are all files you want to be gone
+    find  . -name \*.backup
+    # delete
+    find . -name \*.backup -exec rm {} \;
 
 Background
 ----------
