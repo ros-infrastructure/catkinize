@@ -38,7 +38,6 @@ import xml.etree.ElementTree as ET
 conversions = [
     ('rosbuild_init', None),
     ('cmake_minimum_required', None),
-    ('include', None),
     ('rosbuild_add_boost_directories', None),
     ('rosbuild_add_gtest_build_flags', None),
     ('rosbuild_add_rostest', None),
@@ -196,15 +195,20 @@ def convert_snippet(name, funargs):
             if b is not None:
                 snippet = snippet.replace(a, b)
             else:
-                snippet = comment(snippet, '# CATKIN_MIGRATION\n# removed during catkin migration')
+                snippet = comment(snippet, '\n# CATKIN_MIGRATION: removed during catkin migration')
             converted = True
             break
     if not converted:
         for a, b in manual_conversions:
             if a == name.strip():
-                snippet = comment(snippet, '# CATKIN_MIGRATION\n%s' % b)
+                snippet = comment(snippet, '\n# CATKIN_MIGRATION\n%s' % b)
                 converted = True
                 break
+    if not converted:
+        if 'include' == name.strip():
+            if 'rosbuild' in funargs:
+                snippet = comment(snippet, '\n# CATKIN_MIGRATION: removed during catkin migration')
+            converted = True
     return snippet
 
 
