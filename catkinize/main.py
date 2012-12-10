@@ -31,7 +31,7 @@ import re
 import os
 import sys
 
-from catkinize.convert_manifest import convert_manifest
+from catkinize.convert_manifest import convert_manifest, make_from_stack_manifest
 from catkinize.convert_cmake import convert_cmake
 
 
@@ -104,6 +104,46 @@ def catkinize_package(path, version):
     return _create_changesets(path, filenames, newfiles, contents)
 
 
+def catkinize_stack(path, version):
+    """
+    Calculates a list of changes for one stack. changes are 4-tupels of oldfile, backupfile, newfile, contents.
+    This comes before execution so that the user may confirm or reject changes.
+    """
+    stack_manifest_path = os.path.join(path, 'stack.xml')
+    if not os.path.isfile(stack_manifest_path) :
+        raise ValueError('Path is not a rosbuild stack, missing stack.xml at %s' % path)
+    with open(stack_manifest_path) as fhand:
+        stack_manifest = fhand.read()
+    filenames = os.listdir(path)
+    changeset = []
+
+    if os.path.isfile(os.path.join(path, 'manifest.xml')):
+        # unary stack
+        packages = [path]
+        changeset.extend(_create_changesets(path, ['stack.xml', 'Makefile', 'CMakeLists.txt']))
+    else:
+        packages = []
+        for (parentdir, subdirs, files) in os.walk(path):
+            # print(files)
+            if 'manifest.xml' in files:
+                packages.append(parentdir)
+                del subdirs[:]
+            elif os.path.basename(parentdir) in ['.svn', 'CVS', '.hg', '.git']:
+                del subdirs[:]
+        meta_package_name = os.path.basename(path)
+        meta_package = os.path.join(path, meta_package_name)
+        meta_manifest = os.path.join(meta_package_name, 'package.xml')
+        package_names = [os.path.basename(package) for package in packages]
+        meta_contents = make_from_stack_manifest(stack_manifest, meta_package_name, package_names, version)
+        changeset.extend(_create_changesets(path,
+                                            ['stack.xml', 'Makefile', 'CMakeLists.txt'],
+                                            [meta_manifest, None, None],
+                                            [meta_contents, None, None]))
+
+    # print(packages)
+
+    for package in packages:
+        changeset.extend(catkinize_package(package, version))
     return changeset
 
 
@@ -147,6 +187,9 @@ def perform_changes(changeset):
             os.rename(oldfile, backup_file)
             print('Backed up file: %s  ==>  %s ' % (oldfile, backup_file))
         if newfile:
+            # for new meta packages
+            if not os.path.isdir(os.path.dirname(newfile)):
+                os.mkdir(os.path.dirname(newfile))
             with open(newfile, "w") as fhand:
                 fhand.write(content)
                 print("Wrote new file %s" % newfile)
