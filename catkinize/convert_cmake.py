@@ -43,8 +43,6 @@ conversions = [
     ('rosbuild_add_rostest', None),
     ('rosbuild_add_gtest', 'catkin_add_gtest'),
     ('rosbuild_add_pyunit', 'catkin_add_nosetests'),
-    ('rosbuild_genmsg', 'generate_messages'),
-    ('rosbuild_gensrv', 'generate_messages'),
     ('rosbuild_add_executable', 'add_executable'),
     ('rosbuild_add_library', 'add_library'),
     ('rosbuild_download_test_data', 'download_test_data'),
@@ -142,7 +140,11 @@ def convert_cmake(project_path, cmakelists_path=None, manifest_xml_path=None):
     for (old_snippet, new_snippet) in zip(original, result):
         if old_snippet or new_snippet:
             result_string += (new_snippet or old_snippet)
+
+    with_messages = ('add_message_files' in result or 'add_service_files' in result_string)
+    result_string += make_package_lines(dependencies_str, with_messages)
     return result_string
+
 
 def get_dependencies(manifest_path):
     '''
@@ -166,21 +168,35 @@ def make_header_lines(project_name, deps_str):
     Make top lines of CMakeLists file according to
     http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
     """
-    full_deps_str = 'DEPENDS %s' % deps_str if deps_str.strip() else ''
+    components_str = 'COMPONENTS %s' % deps_str if deps_str.strip() else ''
     header = '''
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
 project(%s)
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED)
-
-catkin_package(%s
-    INCLUDE_DIRS include
-    LIBRARIES ${PROJECT_NAME})
+# TODO: remove all from COMPONENTS that are not catkin packages.
+find_package(catkin REQUIRED %s)
 
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
-''' % (project_name, full_deps_str)
+''' % (project_name, components_str)
     return header.strip().splitlines()
+
+
+def make_package_lines(deps_str, with_messages):
+    full_deps_str = 'DEPENDS %s' % deps_str if deps_str.strip() else 'DEPENDS  # TODO'
+    msg_str = '## Generate added messages and services with any dependencies listed here\ngenerate_messages(\n  #TODO DEPENDENCIES geometry_msgs std_msgs\n)' if with_messages else ''
+    lines = '''%s
+# TODO: fill in what other packages will need to use this package
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+    %s
+    CATKIN-DEPENDS # TODO
+    INCLUDE_DIRS # TODO include
+    LIBRARIES # TODO
+)''' % (msg_str, full_deps_str)
+    return lines
 
 
 def convert_snippet(name, funargs):
@@ -208,6 +224,13 @@ def convert_snippet(name, funargs):
         if 'include' == name.strip():
             if 'rosbuild' in funargs:
                 snippet = comment(snippet, '\n# CATKIN_MIGRATION: removed during catkin migration')
+            converted = True
+    if not converted:
+        if 'rosbuild_genmsg' == name.strip():
+            snippet = 'add_message_files(\n  FILES\n  # TODO: List your msg files here\n)'
+            converted = True
+        elif 'rosbuild_gensrv' == name.strip():
+            snippet = 'add_service_files(\n  FILES\n  # TODO: List your msg files here\n)'
             converted = True
     return snippet
 

@@ -37,3 +37,6 @@ class CatkinizeCmakeFixturesTest(unittest.TestCase):
 
     def test_rpekf(self):
         self.run_with_fixture('rpekf')
+
+    def test_navfn(self):
+        self.run_with_fixture('navfn')

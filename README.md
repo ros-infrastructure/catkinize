@@ -21,9 +21,13 @@ Example
 
     hg clone https://kforge.ros.org/common/filters
     catkinize_stack filters
+    # to catkinize single packages onky, call catkinize instead
 
     # now check and adapt the CMakeLists.txt with any text editor
-    $EDITOR CMakeLists.txt  # Make any changes needed
+    # deal with all TODO comments
+    # - Validate marked changes
+    # - remove all commented blocks that should now be obsolete
+    $EDITOR CMakeLists.txt
     # Edit package.xml:
     #  - Make sure there is a valid maintainer
     #  - Uncomment dependencies as needed
@@ -40,6 +44,11 @@ Example
     find  . -name \*.backup
     # delete
     find . -name \*.backup -exec rm {} \;
+
+Alternative
+-----------
+
+In many cases it might be asier to start a new CMakeLists.txt from scratch, or using the catkin_create_pkg tool suplied with catkin_pkg.
 
 Background
 ----------
