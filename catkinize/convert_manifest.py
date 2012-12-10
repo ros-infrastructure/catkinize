@@ -155,7 +155,7 @@ def make_from_manifest(manifest_xml_str,
                              architecture_independent=architecture_independent,
                              metapackage=metapackage)
 
-    for name in 'maintainer build_depend run_depend test_depend'.split():
+    for name in ['maintainer', 'build_depend', 'run_depend', 'test_depend']:
         xml = xml_lib.comment_out_tags_named(xml, name)
 
     return xml
