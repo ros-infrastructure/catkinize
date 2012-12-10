@@ -229,6 +229,7 @@ def create_project_xml(package_name, version, description, maintainers,
     bugtracker_part = '<url type="bugtracker">%s</url>' % bugtracker_url
     if not bugtracker_url:
         bugtracker_part = comment_out(bugtracker_part)
+    bugtracker_part = indent(bugtracker_part)
 
     authors_part = make_section('author', authors)
     build_depends_part = make_section('build_depend', build_depends)
