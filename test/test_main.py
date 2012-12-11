@@ -1,5 +1,4 @@
 import os
-import StringIO
 import unittest
 import tempfile
 import shutil

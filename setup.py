@@ -23,4 +23,3 @@ setup(name='catkinize',
       packages=find_packages(exclude=("tests",)),
       test_suite='nose.collector',
       tests_require=['nose'])
-

@@ -31,7 +31,6 @@ from __future__ import print_function
 import re
 import os
 import sys
-import argparse
 import xml.etree.ElementTree as ET
 
 # removals and stuff we can replace
@@ -79,7 +78,7 @@ def chunks(l, n):
     >>> chunks([2, 5, 7, 4, 6, 8], 3)
     [[2, 5, 7], [4, 6, 8]]
     """
-    return [l[i:i+n] for i in range(0, len(l), n)]
+    return [l[i:i + n] for i in range(0, len(l), n)]
 
 
 def convert_cmake(project_path, cmakelists_path=None, manifest_xml_path=None):
@@ -120,7 +119,6 @@ def convert_cmake(project_path, cmakelists_path=None, manifest_xml_path=None):
                 first_boost = count * 2 + 1
             boost_components = boost_components.union(components)
             result.append(newsnippet)
-
 
         result.append(None)
         original.append(rest)

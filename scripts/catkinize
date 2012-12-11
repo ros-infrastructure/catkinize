@@ -31,7 +31,6 @@
 
 '''Script to generate package.xml from manifest.xml'''
 
-import os
 from optparse import OptionParser
 
 from catkinize.main import catkinize_package, prompt_changes, perform_changes

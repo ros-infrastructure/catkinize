@@ -28,11 +28,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-
 from optparse import OptionParser
 
 from catkinize.main import catkinize_stack, prompt_changes, perform_changes
+
 
 def main():
     usage = 'usage: %prog path version'

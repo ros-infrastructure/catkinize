@@ -1,5 +1,3 @@
-import os
-import StringIO
 import unittest
 
 from catkinize.convert_cmake import make_header_lines, convert_snippet, \
@@ -46,7 +44,6 @@ catkin_package(
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
 )''', lines)
-
 
     def test_argument_splitter_single_line(self):
         orig = "(foo bar)"

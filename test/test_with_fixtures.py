@@ -8,7 +8,6 @@ imp.load_source('catkinize_cmakelists',
                              '..', 'scripts', 'catkinize_cmakelists.py'))
 
 from catkinize_cmakelists import main
-from utils import create_temp_file
 
 
 class CatkinizeCmakeFixturesTest(unittest.TestCase):

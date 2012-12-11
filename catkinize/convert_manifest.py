@@ -38,15 +38,18 @@ from catkinize import xml_lib
 SPACE_COMMA_RX = re.compile(r',\s*')
 
 
-
 def convert_manifest(package_path,
                      manifest_xml_path,
                      version,
                      architecture_independent=False,
                      metapackage=False,
                      bugtracker_url='',
-                     replaces=[],
-                     conflicts=[]):
+                     replaces=None,
+                     conflicts=None):
+    if conflicts is None:
+        conflicts = []
+    if replaces is None:
+        replaces = []
     package_name = os.path.basename(os.path.abspath(package_path))
     logging.basicConfig(format='%(levelname)s - %(message)s')
     try:
@@ -62,10 +65,10 @@ def convert_manifest(package_path,
                                          conflicts)
             pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
             return pkg_xml
-    except ET.ParseError as e:
-        line_num = int(re.compile(r'.*line (\d+).*').match(str(e)).group(1))
-        line = manifest_xml_str.splitlines()[line_num-1]
-        logging.error('%s\n"%s"\n', e, line)
+    except ET.ParseError as exc:
+        line_num = int(re.compile(r'.*line (\d+).*').match(str(exc)).group(1))
+        line = manifest_xml_str.splitlines()[line_num - 1]
+        logging.error('%s\n"%s"\n', exc, line)
 
 
 def merge_dups(lines):
@@ -209,10 +212,6 @@ def make_from_stack_manifest(manifest_xml_str,
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
     maintainers = authors
-    depend_tags = manifest.findall('depend')
-    # depends = [d.attrib['package'] for d in depend_tags]
-    export_tags = xml_lib.xml_find(manifest, 'export').getchildren()
-    exports = [(e.tag, e.attrib) for e in export_tags]
 
     xml = create_project_xml(package_name=package_name,
                              version=version,
@@ -296,24 +295,32 @@ def create_project_xml(package_name, version, description, maintainers,
     >>> tree = ET.XML(pxml)
 
     """
-    maintainers_part = make_section('maintainer', maintainers)
-    licenses_part = '\n'.join(
+    subs = {}
+    subs['maintainers_part'] = make_section('maintainer', maintainers)
+    subs['licenses_part'] = '\n'.join(
         indent('<license>%s</license>' % l)
         for l in licenses)
 
     bugtracker_part = '<url type="bugtracker">%s</url>' % bugtracker_url
     if not bugtracker_url:
         bugtracker_part = comment_out(bugtracker_part)
-    bugtracker_part = indent(bugtracker_part)
+    subs['bugtracker_part'] = indent(bugtracker_part)
 
-    authors_part = make_section('author', authors)
-    build_depends_part = make_section('build_depend', build_depends)
-    run_depends_part = make_section('run_depend', run_depends)
-    test_depends_part = make_section('test_depend', test_depends)
-    replaces_part = make_section('replace', replaces)
-    conflicts_part = make_section('conflict', conflicts)
-    exports_part = make_exports_section(exports, architecture_independent,
-                                        metapackage)
+    subs['authors_part'] = make_section('author', authors)
+    subs['build_depends_part'] = make_section('build_depend', build_depends)
+    subs['run_depends_part'] = make_section('run_depend', run_depends)
+    subs['test_depends_part'] = make_section('test_depend', test_depends)
+    subs['replaces_part'] = make_section('replace', replaces)
+    subs['conflicts_part'] = make_section('conflict', conflicts)
+    subs['version'] = version
+    subs['package_name'] = package_name
+    subs['description'] = description
+    subs['website_url'] = website_url
+    subs['exports_part'] = make_exports_section(
+      exports,
+      architecture_independent,
+      metapackage
+    )
     return '''\
 <package>
   <name>%(package_name)s</name>
@@ -339,7 +346,7 @@ def create_project_xml(package_name, version, description, maintainers,
 %(exports_part)s
   </export>
 </package>
-''' % vars()
+''' % subs
 
 
 def comment_out(xml):
@@ -382,15 +389,15 @@ def space_join(words):
     return ' '.join(w for w in words if w)
 
 
-def indent(s, n=1):
-    return (n * '  ') + s
+def indent(strg, amount=1):
+    return (amount * '  ') + strg
 
 
-def dict_to_attrs(d):
+def dict_to_attrs(values):
     """
     Convert a dictionary to a string containing attributes in XML format.
     """
-    return ' '.join('%s="%s"' % (k, v) for k, v in d.items())
+    return ' '.join('%s="%s"' % (k, v) for k, v in values.items())
 
 
 def make_exports_section(exports, architecture_independent, metapackage):
@@ -400,5 +407,5 @@ def make_exports_section(exports, architecture_independent, metapackage):
         parts.append('<architecture_independent/>')
     if metapackage:
         parts.append('<metapackage/>')
-    parts = [indent(p, n=2) for p in parts]
+    parts = [indent(p, 2) for p in parts]
     return '\n'.join(parts)

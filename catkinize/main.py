@@ -27,7 +27,6 @@
 #
 
 from __future__ import print_function
-import re
 import os
 import sys
 
@@ -47,15 +46,15 @@ class Ui(object):
 DEFAULT_UI = Ui
 
 
-def _create_changesets(path, filenames, newfiles = None, contents = None):
+def _create_changesets(path, filenames, newfiles=None, contents=None):
     """
     creates 4 tupels depending on the 4 input lists.
     look up filenames in path, add changeset to rename to xyz.backup, if newfile is given, adds action to create with given contents
     """
     oldfiles = [os.path.join(path, filename) for filename in filenames]
     backup_files = [oldfile + '.backup' for oldfile in oldfiles]
-    changeset = [] # 4-tupels of oldfile, backup, newfile, contents
-    for oldfile, backup_file in zip (oldfiles, backup_files):
+    changeset = []  # 4-tupels of oldfile, backup, newfile, contents
+    for oldfile, backup_file in zip(oldfiles, backup_files):
         if os.path.isfile(oldfile) and os.path.isfile(backup_file):
             raise ValueError('Cannot write backup file %s, operation aborted without changes' % backup_file)
 
@@ -63,7 +62,7 @@ def _create_changesets(path, filenames, newfiles = None, contents = None):
         newfiles = [None for _ in oldfiles]
         contents = [None for _ in oldfiles]
 
-    for oldfile, backup_file, newfile, content in zip (oldfiles, backup_files, newfiles, contents):
+    for oldfile, backup_file, newfile, content in zip(oldfiles, backup_files, newfiles, contents):
         if os.path.exists(oldfile):
             if newfile:
                 changeset.append((oldfile,
@@ -91,11 +90,8 @@ def catkinize_package(path, version):
 
     if not os.path.isfile(manifest_path):
         raise ValueError("No rosbuild package at %s, missing manifest.xml" % manifest_path)
-    package_name = os.path.basename(manifest_path)
     new_manifest = convert_manifest(path, manifest_path, version)
-    # print(new_manifest)
     new_cmake = convert_cmake(path)
-    # print(new_cmake)
 
     filenames = ['CMakeLists.txt', 'manifest.xml', 'Makefile']
     newfiles = ['CMakeLists.txt', 'package.xml', None]
@@ -110,11 +106,10 @@ def catkinize_stack(path, version):
     This comes before execution so that the user may confirm or reject changes.
     """
     stack_manifest_path = os.path.join(path, 'stack.xml')
-    if not os.path.isfile(stack_manifest_path) :
+    if not os.path.isfile(stack_manifest_path):
         raise ValueError('Path is not a rosbuild stack, missing stack.xml at %s' % path)
     with open(stack_manifest_path) as fhand:
         stack_manifest = fhand.read()
-    filenames = os.listdir(path)
     changeset = []
 
     if os.path.isfile(os.path.join(path, 'manifest.xml')):
@@ -131,7 +126,6 @@ def catkinize_stack(path, version):
             elif os.path.basename(parentdir) in ['.svn', 'CVS', '.hg', '.git']:
                 del subdirs[:]
         meta_package_name = os.path.basename(path)
-        meta_package = os.path.join(path, meta_package_name)
         meta_manifest = os.path.join(meta_package_name, 'package.xml')
         package_names = [os.path.basename(package) for package in packages]
         meta_contents = make_from_stack_manifest(stack_manifest, meta_package_name, package_names, version)

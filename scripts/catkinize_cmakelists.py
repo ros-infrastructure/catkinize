@@ -38,6 +38,7 @@ import sys
 import argparse
 from catkinize.convert_cmake import convert_cmake
 
+
 def main(argv, outstream):
     """
     reads file and prints converted file to stdout
@@ -70,4 +71,3 @@ def main(argv, outstream):
 
 if __name__ == '__main__':
     main(argv=sys.argv[1:], outstream=sys.stdout)
-
