@@ -8,7 +8,6 @@ imp.load_source('catkinize_cmakelists',
                              '..', 'scripts', 'catkinize_cmakelists.py'))
 
 from catkinize_cmakelists import main
-from utils import create_temp_file
 
 
 class CatkinizeCmakeFixturesTest(unittest.TestCase):
@@ -37,3 +36,6 @@ class CatkinizeCmakeFixturesTest(unittest.TestCase):
 
     def test_rpekf(self):
         self.run_with_fixture('rpekf')
+
+    def test_navfn(self):
+        self.run_with_fixture('navfn')

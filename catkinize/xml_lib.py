@@ -36,5 +36,3 @@ def comment_out_tags_named(xml, tag_name):
     xml = rx2.sub(r'<!-- \1', xml)
     xml = rx3.sub(r'\1 -->', xml)
     return xml
-
-

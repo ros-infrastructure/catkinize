@@ -1,13 +1,8 @@
-import os
-import StringIO
 import unittest
 
-import imp
-imp.load_source('catkinize_cmakelists',
-                os.path.join(os.path.dirname(__file__),
-                             '..', 'scripts', 'catkinize_cmakelists.py'))
-
-from catkinize_cmakelists import make_header_lines, convert_snippet, convert_boost_snippet, ARGUMENT_SPLITTER, FUNCALL_PATTERN
+from catkinize.convert_cmake import make_header_lines, convert_snippet, \
+    convert_boost_snippet, ARGUMENT_SPLITTER, FUNCALL_PATTERN, \
+    make_package_lines
 
 
 class CatkinizeCmakeTest(unittest.TestCase):
@@ -17,10 +12,38 @@ class CatkinizeCmakeTest(unittest.TestCase):
         self.assertEqual(' catkin_add_nosetests(bar)', convert_snippet(' rosbuild_add_pyunit', '(bar)'))
 
     def test_make_header_lines(self):
-        lines = make_header_lines('foo', '')
-        self.assertTrue('catkin_package(' in lines, lines)
+        lines = make_header_lines('foo', 'bar, baz')
         self.assertTrue('project(foo)' in lines, lines)
 
+    def test_make_package_lines(self):
+        lines = make_package_lines('bar, baz', True)
+        self.assertEquals(
+            '''## Generate added messages and services with any dependencies listed here
+generate_messages(
+  #TODO DEPENDENCIES geometry_msgs std_msgs
+)
+# TODO: fill in what other packages will need to use this package
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+    DEPENDS bar, baz
+    CATKIN-DEPENDS # TODO
+    INCLUDE_DIRS # TODO include
+    LIBRARIES # TODO
+)''', lines)
+        lines = make_package_lines('bar, baz', False)
+        self.assertEquals('''
+# TODO: fill in what other packages will need to use this package
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+    DEPENDS bar, baz
+    CATKIN-DEPENDS # TODO
+    INCLUDE_DIRS # TODO include
+    LIBRARIES # TODO
+)''', lines)
 
     def test_argument_splitter_single_line(self):
         orig = "(foo bar)"

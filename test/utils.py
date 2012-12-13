@@ -1,6 +1,7 @@
 import tempfile
 import os
 
+
 def create_temp_file(contents):
     '''
     create_temp_file creates a temporary file with a given string as its
@@ -11,4 +12,3 @@ def create_temp_file(contents):
         f.write(contents)
         f.close()
     return path
-

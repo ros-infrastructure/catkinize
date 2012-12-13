@@ -28,46 +28,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-'''
-This script partially converts a CMakeLists.txt file from rosbuild to catkin.
-'''
+from optparse import OptionParser
 
-from __future__ import print_function
-import os
-import sys
-import argparse
-from catkinize.convert_cmake import convert_cmake
+from catkinize.main import catkinize_stack, prompt_changes, perform_changes
 
 
-def main(argv, outstream):
-    """
-    reads file and prints converted file to stdout
-    """
-    parser = argparse.ArgumentParser(description='writes converted version of CMakeLists.txt to stdout')
-    parser.add_argument('project_path',
-                        nargs='?',
-                        default=None,
-                        help='The path to the package')
-    parser.add_argument('cmakelists_path',
-                        nargs='?',
-                        default=None,
-                        help='path to the CMakeLists.txt')
-    parser.add_argument('manifest_xml_path',
-                        nargs='?',
-                        default=None,
-                        help='path to the manifest.xml')
-    # Parse args
-    args = parser.parse_args(argv)
-    project_path = args.project_path or os.getcwd()
+def main():
+    usage = 'usage: %prog path version'
+    parser = OptionParser(usage)
+    parser = OptionParser(usage,
+                          description='catkinize_stack invokes catkinize for all packages of the stack, and creates a new meta-package for your stack unless it was a unary package. New files are heuristically build from old files and will most probably need additional manual changes before working with catkin.')
 
-    # Convert CMakeLists.txt
-    print(
-        convert_cmake(
-            project_path,
-            args.cmakelists_path,
-            args.manifest_xml_path),
-        file=outstream)
+    options, args = parser.parse_args()
+    if len(args) != 2:
+        parser.error('Too many arguments %s' % len(args))
 
+    path = args[0]
+    version = args[1]
+
+    changeset = catkinize_stack(path, version)
+    if(prompt_changes(changeset)):
+        perform_changes(changeset)
 
 if __name__ == '__main__':
-    main(argv=sys.argv[1:], outstream=sys.stdout)
+    main()
