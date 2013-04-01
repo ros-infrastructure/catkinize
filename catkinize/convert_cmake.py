@@ -185,12 +185,13 @@ def make_package_lines(deps_str, with_messages):
     msg_str = '## Generate added messages and services with any dependencies listed here\ngenerate_messages(\n  #TODO DEPENDENCIES geometry_msgs std_msgs\n)' if with_messages else ''
     lines = '''%s
 # TODO: fill in what other packages will need to use this package
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## INCLUDE_DIRS: 
+## LIBRARIES: libraries you create in this project that dependent projects also need
 catkin_package(
     %s
-    CATKIN-DEPENDS # TODO
+    CATKIN_DEPENDS # TODO
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
 )''' % (msg_str, full_deps_str)
