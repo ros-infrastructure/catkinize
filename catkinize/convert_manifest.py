@@ -135,7 +135,7 @@ def make_from_manifest(manifest_xml_str,
     licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
-    maintainers = authors
+    maintainers = [(a,{'email':''}) if isinstance(a,basestring) else a for a in authors ]
     depend_tags = manifest.findall('depend')
     depends = [d.attrib['package'] for d in depend_tags]
     export_tags = xml_lib.xml_find(manifest, 'export').getchildren()
@@ -158,7 +158,9 @@ def make_from_manifest(manifest_xml_str,
                              architecture_independent=architecture_independent,
                              metapackage=metapackage)
 
-    for name in ['maintainer', 'build_depend', 'run_depend', 'test_depend']:
+    # Maintainer tags without e-mail addresses are already invalid without also being commented out
+    # Most dependencies are build and run depends
+    for name in ['test_depend']:
         xml = xml_lib.comment_out_tags_named(xml, name)
 
     return xml
@@ -211,7 +213,8 @@ def make_from_stack_manifest(manifest_xml_str,
     licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
-    maintainers = authors
+
+    maintainers = [(a,{'email':''}) if isinstance(a,basestring) else a for a in authors ]
 
     xml = create_project_xml(package_name=package_name,
                              version=version,
@@ -230,8 +233,9 @@ def make_from_stack_manifest(manifest_xml_str,
                              architecture_independent=False,
                              metapackage=True)
 
-    for name in ['maintainer']:
-        xml = xml_lib.comment_out_tags_named(xml, name)
+    # Maintainer tags without e-mail addresses are already invalid without also being commented out
+    #for name in ['maintainer']:
+    #    xml = xml_lib.comment_out_tags_named(xml, name)
 
     return xml
 
@@ -335,8 +339,13 @@ def create_project_xml(package_name, version, description, maintainers,
 
 %(authors_part)s
 
+<!-- Dependencies needed to compile this pacakge. -->
 %(build_depends_part)s
+
+<!-- Dependencies needed after this package is compiled. -->
 %(run_depends_part)s
+
+<!-- Dependencies needed only for running tests. -->
 %(test_depends_part)s
 
 %(replaces_part)s
