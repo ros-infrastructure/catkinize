@@ -335,6 +335,8 @@ def create_project_xml(package_name, version, description, maintainers,
 
 %(authors_part)s
 
+  <buildtool_depend>catkin</buildtool_depend>
+
 %(build_depends_part)s
 %(run_depends_part)s
 %(test_depends_part)s
