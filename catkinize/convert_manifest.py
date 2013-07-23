@@ -247,7 +247,12 @@ def parse_authors_field(authors_str):
 
     >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
     [('Alice', {'email': 'alice@somewhere.bar'}), 'Bob']
+    >>> parse_authors_field(None)
+    []
     """
+    if authors_str is None:
+        return []
+
     authors = []
     for s in SPACE_COMMA_RX.split(authors_str):
         parts = s.split('/')
