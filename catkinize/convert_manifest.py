@@ -135,7 +135,9 @@ def make_from_manifest(manifest_xml_str,
     licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
-    maintainers = [(a,{'email':''}) if isinstance(a,basestring) else a for a in authors ]
+    maintainers = [(a, {'email': ''})
+                   if isinstance(a, basestring)
+                   else a for a in authors]
     depend_tags = manifest.findall('depend')
     depends = [d.attrib['package'] for d in depend_tags]
     export_tags = xml_lib.xml_find(manifest, 'export').getchildren()
@@ -158,8 +160,8 @@ def make_from_manifest(manifest_xml_str,
                              architecture_independent=architecture_independent,
                              metapackage=metapackage)
 
-    # Maintainer tags without e-mail addresses are already invalid without also being commented out
-    # Most dependencies are build and run depends
+    # Most dependencies are build and run depends. Comment out the test_depend
+    # dependencies.
     for name in ['test_depend']:
         xml = xml_lib.comment_out_tags_named(xml, name)
 
@@ -210,11 +212,14 @@ def make_from_stack_manifest(manifest_xml_str,
     description = xml_lib.xml_find(manifest, 'description').text.strip()
     authors_str = xml_lib.xml_find(manifest, 'author').text
     authors = parse_authors_field(authors_str)
+
     licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
 
-    maintainers = [(a,{'email':''}) if isinstance(a,basestring) else a for a in authors ]
+    maintainers = [(a, {'email': ''})
+                   if isinstance(a, basestring)
+                   else a for a in authors]
 
     xml = create_project_xml(package_name=package_name,
                              version=version,
@@ -232,10 +237,6 @@ def make_from_stack_manifest(manifest_xml_str,
                              exports=[],
                              architecture_independent=False,
                              metapackage=True)
-
-    # Maintainer tags without e-mail addresses are already invalid without also being commented out
-    #for name in ['maintainer']:
-    #    xml = xml_lib.comment_out_tags_named(xml, name)
 
     return xml
 
@@ -326,9 +327,9 @@ def create_project_xml(package_name, version, description, maintainers,
     subs['description'] = description
     subs['website_url'] = website_url
     subs['exports_part'] = make_exports_section(
-      exports,
-      architecture_independent,
-      metapackage
+        exports,
+        architecture_independent,
+        metapackage
     )
     return '''\
 <package>
