@@ -344,9 +344,10 @@ def create_project_xml(package_name, version, description, maintainers,
 
 %(authors_part)s
 
+  <!-- Dependencies which this package needs to build itself. -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <!-- Dependencies needed to compile this pacakge. -->
+  <!-- Dependencies needed to compile this package. -->
 %(build_depends_part)s
 
   <!-- Dependencies needed after this package is compiled. -->
