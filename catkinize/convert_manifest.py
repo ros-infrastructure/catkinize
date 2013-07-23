@@ -71,22 +71,6 @@ def convert_manifest(package_path,
         logging.error('%s\n"%s"\n', exc, line)
 
 
-def merge_adjacent_dups(lines):
-    """
-    Remove adjacent duplicate lines from a list of strings.
-
-    >>> merge_adjacent_dups(['a', 'b', 'b'])
-    ['a', 'b']
-    >>> merge_adjacent_dups(['a', 'b', 'b', 'a'])
-    ['a', 'b', 'a']
-    >>> merge_adjacent_dups(['a'])
-    ['a']
-    >>> merge_adjacent_dups([])
-    []
-    """
-    return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
-
-
 def make_from_manifest(manifest_xml_str,
                        package_name,
                        version,
@@ -241,30 +225,6 @@ def make_from_stack_manifest(manifest_xml_str,
     return xml
 
 
-def parse_authors_field(authors_str):
-    """
-    Extract author names and email addresses from free-form text in the <author>
-    tag of manifest.xml.
-
-    >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
-    [('Alice', {'email': 'alice@somewhere.bar'}), 'Bob']
-    >>> parse_authors_field(None)
-    []
-    """
-    if authors_str is None:
-        return []
-
-    authors = []
-    for s in SPACE_COMMA_RX.split(authors_str):
-        parts = s.split('/')
-        if len(parts) == 1:
-            authors.append(parts[0])
-        elif len(parts) == 2:
-            pair = (parts[0], dict(email=parts[1]))
-            authors.append(pair)
-    return authors
-
-
 def create_project_xml(package_name, version, description, maintainers,
                        licenses, website_url, bugtracker_url, authors,
                        build_depends, run_depends, test_depends, replaces,
@@ -365,6 +325,49 @@ def create_project_xml(package_name, version, description, maintainers,
   </export>
 </package>
 ''' % subs
+
+
+##############################################################################
+# Utility functions
+##############################################################################
+def merge_adjacent_dups(lines):
+    """
+    Remove adjacent duplicate lines from a list of strings.
+
+    >>> merge_adjacent_dups(['a', 'b', 'b'])
+    ['a', 'b']
+    >>> merge_adjacent_dups(['a', 'b', 'b', 'a'])
+    ['a', 'b', 'a']
+    >>> merge_adjacent_dups(['a'])
+    ['a']
+    >>> merge_adjacent_dups([])
+    []
+    """
+    return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
+
+
+def parse_authors_field(authors_str):
+    """
+    Extract author names and email addresses from free-form text in the
+    <author> tag of manifest.xml.
+
+    >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
+    [('Alice', {'email': 'alice@somewhere.bar'}), 'Bob']
+    >>> parse_authors_field(None)
+    []
+    """
+    if authors_str is None:
+        return []
+
+    authors = []
+    for s in SPACE_COMMA_RX.split(authors_str):
+        parts = s.split('/')
+        if len(parts) == 1:
+            authors.append(parts[0])
+        elif len(parts) == 2:
+            pair = (parts[0], dict(email=parts[1]))
+            authors.append(pair)
+    return authors
 
 
 def comment_out(xml):
