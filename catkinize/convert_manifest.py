@@ -35,9 +35,50 @@ import xml.etree.ElementTree as ET
 
 from catkinize import xml_lib
 
+
+##############################################################################
 SPACE_COMMA_RX = re.compile(r',\s*')
 
+# The final package is going to look like the PACKAGE_TEMPLATE
+PACKAGE_TEMPLATE = '''\
+<package>
+  <name>%(package_name)s</name>
+  <version>%(version)s</version>
+  <description>%(description)s</description>
+%(maintainers_part)s
 
+%(licenses_part)s
+
+  <url type="website">%(website_url)s</url>
+%(bugtracker_part)s
+
+%(authors_part)s
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+%(build_depends_part)s
+
+  <!-- Dependencies needed after this package is compiled. -->
+%(run_depends_part)s
+
+  <!-- Dependencies needed only for running tests. -->
+%(test_depends_part)s
+
+%(replaces_part)s
+%(conflicts_part)s
+
+  <export>
+%(exports_part)s
+  </export>
+</package>
+'''
+
+
+##############################################################################
+# Main Logic
+##############################################################################
 def convert_manifest(package_path,
                      manifest_xml_path,
                      version,
@@ -291,40 +332,7 @@ def create_project_xml(package_name, version, description, maintainers,
         architecture_independent,
         metapackage
     )
-    return '''\
-<package>
-  <name>%(package_name)s</name>
-  <version>%(version)s</version>
-  <description>%(description)s</description>
-%(maintainers_part)s
-
-%(licenses_part)s
-
-  <url type="website">%(website_url)s</url>
-%(bugtracker_part)s
-
-%(authors_part)s
-
-  <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <!-- Dependencies needed to compile this package. -->
-%(build_depends_part)s
-
-  <!-- Dependencies needed after this package is compiled. -->
-%(run_depends_part)s
-
-  <!-- Dependencies needed only for running tests. -->
-%(test_depends_part)s
-
-%(replaces_part)s
-%(conflicts_part)s
-
-  <export>
-%(exports_part)s
-  </export>
-</package>
-''' % subs
+    return PACKAGE_TEMPLATE % subs
 
 
 ##############################################################################
