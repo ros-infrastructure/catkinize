@@ -31,7 +31,7 @@ import os
 import sys
 
 from catkinize.convert_manifest import convert_manifest, make_from_stack_manifest
-from catkinize.convert_cmake import convert_cmake
+from catkinize.convert_cmake import convert_cmake, make_metapackage_cmake
 
 
 class Ui(object):
@@ -129,10 +129,12 @@ def catkinize_stack(path, version):
         meta_manifest = os.path.join(meta_package_name, 'package.xml')
         package_names = [os.path.basename(package) for package in packages]
         meta_contents = make_from_stack_manifest(stack_manifest, meta_package_name, package_names, version)
+        meta_cmake = os.path.join(meta_package_name, 'CMakeLists.txt')
+        cmake_contents = make_metapackage_cmake(meta_package_name)
         changeset.extend(_create_changesets(path,
                                             ['stack.xml', 'Makefile', 'CMakeLists.txt'],
-                                            [meta_manifest, None, None],
-                                            [meta_contents, None, None]))
+                                            [meta_manifest, None, meta_cmake],
+                                            [meta_contents, None, cmake_contents]))
 
     # print(packages)
 

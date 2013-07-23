@@ -39,7 +39,7 @@ conversions = [
     ('cmake_minimum_required', None),
     ('rosbuild_add_boost_directories', None),
     ('rosbuild_add_gtest_build_flags', None),
-    ('rosbuild_add_rostest', None),
+    ('rosbuild_add_rostest', 'add_rostest'),
     ('rosbuild_add_gtest', 'catkin_add_gtest'),
     ('rosbuild_add_pyunit', 'catkin_add_nosetests'),
     ('rosbuild_add_executable', 'add_executable'),
@@ -143,6 +143,13 @@ def convert_cmake(project_path, cmakelists_path=None, manifest_xml_path=None):
     result_string += make_package_lines(dependencies_str, with_messages)
     return result_string
 
+def make_metapackage_cmake(name):
+    result_string = """cmake_minimum_required(VERSION 2.8.3)
+project(%s)
+find_package(catkin REQUIRED)
+catkin_metapackage()
+"""%(name)
+    return result_string
 
 def get_dependencies(manifest_path):
     '''
