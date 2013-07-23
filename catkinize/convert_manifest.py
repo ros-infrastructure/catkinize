@@ -63,7 +63,7 @@ def convert_manifest(package_path,
                                          bugtracker_url,
                                          replaces,
                                          conflicts)
-            pkg_xml = '\n'.join(merge_dups(pkg_xml.splitlines()))
+            pkg_xml = '\n'.join(merge_adjacent_dups(pkg_xml.splitlines()))
             return pkg_xml
     except ET.ParseError as exc:
         line_num = int(re.compile(r'.*line (\d+).*').match(str(exc)).group(1))
@@ -71,17 +71,17 @@ def convert_manifest(package_path,
         logging.error('%s\n"%s"\n', exc, line)
 
 
-def merge_dups(lines):
+def merge_adjacent_dups(lines):
     """
     Remove adjacent duplicate lines from a list of strings.
 
-    >>> merge_dups(['a', 'b', 'b'])
+    >>> merge_adjacent_dups(['a', 'b', 'b'])
     ['a', 'b']
-    >>> merge_dups(['a', 'b', 'b', 'a'])
+    >>> merge_adjacent_dups(['a', 'b', 'b', 'a'])
     ['a', 'b', 'a']
-    >>> merge_dups(['a'])
+    >>> merge_adjacent_dups(['a'])
     ['a']
-    >>> merge_dups([])
+    >>> merge_adjacent_dups([])
     []
     """
     return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
