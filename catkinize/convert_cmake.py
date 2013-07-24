@@ -61,7 +61,7 @@ manual_conversions = [
     ('rosbuild_include', '# use include(module) after finding the path'),
     ('rosbuild_add_swigpy_library', '# find swigpy in some other way'),
     ('rosbuild_make_distribution', '# use bloom tool')
-    ]
+]
 
 # adding ^ to the beginning of the re would discard all commented lines
 FUNCALL_PATTERN = re.compile(r'([ ]*[a-zA-Z][a-zA-Z_]+)(\s*\([^)]*\))', re.MULTILINE)
@@ -175,7 +175,8 @@ def make_header_lines(project_name, deps_str):
     """
     components_str = 'COMPONENTS %s' % deps_str if deps_str.strip() else ''
     header = '''
-# http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
+# Catkin User Guide: http://www.ros.org/doc/groovy/api/catkin/html/user_guide/user_guide.html
+# Catkin CMake Standard: http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
 cmake_minimum_required(VERSION 2.8.3)
 project(%s)
 # Load catkin and all dependencies required for this package
