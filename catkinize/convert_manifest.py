@@ -87,10 +87,15 @@ def convert_manifest(package_path,
                      bugtracker_url='',
                      replaces=None,
                      conflicts=None):
+    """
+    Convert the given manifest.xml to a catkinized package.xml file (still
+    a string representation).
+    """
     if conflicts is None:
         conflicts = []
     if replaces is None:
         replaces = []
+
     package_name = os.path.basename(os.path.abspath(package_path))
     logging.basicConfig(format='%(levelname)s - %(message)s')
     try:
@@ -106,6 +111,7 @@ def convert_manifest(package_path,
                                          conflicts)
             pkg_xml = '\n'.join(merge_adjacent_dups(pkg_xml.splitlines()))
             return pkg_xml
+
     except ET.ParseError as exc:
         line_num = int(re.compile(r'.*line (\d+).*').match(str(exc)).group(1))
         line = manifest_xml_str.splitlines()[line_num - 1]
@@ -118,8 +124,8 @@ def make_from_manifest(manifest_xml_str,
                        architecture_independent, metapackage,
                        bugtracker_url, replaces, conflicts):
     """
-    Make the contents of a project.xml file from the string contents of
-    manifest.xml.
+    Return a package.xml sturcture filled with the data from the given
+    manifest_xml_str.
 
     >>> manifest_xml_str = '\
     <package>\
@@ -153,6 +159,7 @@ def make_from_manifest(manifest_xml_str,
     >>> import xml.etree.ElementTree as ET
     >>> pkg = ET.XML(pkg_xml)
     """
+    # collect and save infos from the manifest.xml file
     manifest = ET.XML(manifest_xml_str)
     description = xml_lib.xml_find(manifest, 'description').text.strip()
     authors_str = xml_lib.xml_find(manifest, 'author').text
@@ -168,6 +175,7 @@ def make_from_manifest(manifest_xml_str,
     export_tags = xml_lib.xml_find(manifest, 'export').getchildren()
     exports = [(e.tag, e.attrib) for e in export_tags]
 
+    # put the collected infos into a new (package.)xml structure
     xml = create_project_xml(package_name=package_name,
                              version=version,
                              description=description,
@@ -185,8 +193,8 @@ def make_from_manifest(manifest_xml_str,
                              architecture_independent=architecture_independent,
                              metapackage=metapackage)
 
-    # Most dependencies are build and run depends. Comment out the test_depend
-    # dependencies.
+    # Most dependencies are build and run depends. Comment out only the
+    # test_depend dependencies.
     for name in ['test_depend']:
         xml = xml_lib.comment_out_tags_named(xml, name)
 
@@ -198,22 +206,28 @@ def make_from_stack_manifest(manifest_xml_str,
                              packages,
                              version):
     """
-    Make the contents of a project.xml file from the string contents of
-    stack.xml.
+    Return a package.xml sturcture for metapackages filled with the data from
+    the given manifest_xml_str.
+
+    See http://ros.org/wiki/catkin/package.xml#Metapackages for more.
+
     """
+    # TODO This function is very similar to make_from_manifest. Unify both
+    #      functions.
+
+    # collect and save infos from the manifest.xml file
     manifest = ET.XML(manifest_xml_str)
     description = xml_lib.xml_find(manifest, 'description').text.strip()
     authors_str = xml_lib.xml_find(manifest, 'author').text
     authors = parse_authors_field(authors_str)
-
     licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
-
     maintainers = [(a, {'email': ''})
                    if isinstance(a, basestring)
                    else a for a in authors]
 
+    # put the collected infos into a new (package.)xml structure
     xml = create_project_xml(package_name=package_name,
                              version=version,
                              description=description,
