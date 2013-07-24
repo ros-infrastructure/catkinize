@@ -35,9 +35,50 @@ import xml.etree.ElementTree as ET
 
 from catkinize import xml_lib
 
+
+##############################################################################
 SPACE_COMMA_RX = re.compile(r',\s*')
 
+# The final package is going to look like the PACKAGE_TEMPLATE
+PACKAGE_TEMPLATE = '''\
+<package>
+  <name>%(package_name)s</name>
+  <version>%(version)s</version>
+  <description>%(description)s</description>
+%(maintainers_part)s
 
+%(licenses_part)s
+
+  <url type="website">%(website_url)s</url>
+%(bugtracker_part)s
+
+%(authors_part)s
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+%(build_depends_part)s
+
+  <!-- Dependencies needed after this package is compiled. -->
+%(run_depends_part)s
+
+  <!-- Dependencies needed only for running tests. -->
+%(test_depends_part)s
+
+%(replaces_part)s
+%(conflicts_part)s
+
+  <export>
+%(exports_part)s
+  </export>
+</package>
+'''
+
+
+##############################################################################
+# Main Logic
+##############################################################################
 def convert_manifest(package_path,
                      manifest_xml_path,
                      version,
@@ -46,10 +87,15 @@ def convert_manifest(package_path,
                      bugtracker_url='',
                      replaces=None,
                      conflicts=None):
+    """
+    Convert the given manifest.xml to a catkinized package.xml file (still
+    a string representation).
+    """
     if conflicts is None:
         conflicts = []
     if replaces is None:
         replaces = []
+
     package_name = os.path.basename(os.path.abspath(package_path))
     logging.basicConfig(format='%(levelname)s - %(message)s')
     try:
@@ -65,26 +111,11 @@ def convert_manifest(package_path,
                                          conflicts)
             pkg_xml = '\n'.join(merge_adjacent_dups(pkg_xml.splitlines()))
             return pkg_xml
+
     except ET.ParseError as exc:
         line_num = int(re.compile(r'.*line (\d+).*').match(str(exc)).group(1))
         line = manifest_xml_str.splitlines()[line_num - 1]
         logging.error('%s\n"%s"\n', exc, line)
-
-
-def merge_adjacent_dups(lines):
-    """
-    Remove adjacent duplicate lines from a list of strings.
-
-    >>> merge_adjacent_dups(['a', 'b', 'b'])
-    ['a', 'b']
-    >>> merge_adjacent_dups(['a', 'b', 'b', 'a'])
-    ['a', 'b', 'a']
-    >>> merge_adjacent_dups(['a'])
-    ['a']
-    >>> merge_adjacent_dups([])
-    []
-    """
-    return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
 
 
 def make_from_manifest(manifest_xml_str,
@@ -93,8 +124,8 @@ def make_from_manifest(manifest_xml_str,
                        architecture_independent, metapackage,
                        bugtracker_url, replaces, conflicts):
     """
-    Make the contents of a project.xml file from the string contents of
-    manifest.xml.
+    Return a package.xml sturcture filled with the data from the given
+    manifest_xml_str.
 
     >>> manifest_xml_str = '\
     <package>\
@@ -128,6 +159,7 @@ def make_from_manifest(manifest_xml_str,
     >>> import xml.etree.ElementTree as ET
     >>> pkg = ET.XML(pkg_xml)
     """
+    # collect and save infos from the manifest.xml file
     manifest = ET.XML(manifest_xml_str)
     description = xml_lib.xml_find(manifest, 'description').text.strip()
     authors_str = xml_lib.xml_find(manifest, 'author').text
@@ -143,6 +175,7 @@ def make_from_manifest(manifest_xml_str,
     export_tags = xml_lib.xml_find(manifest, 'export').getchildren()
     exports = [(e.tag, e.attrib) for e in export_tags]
 
+    # put the collected infos into a new (package.)xml structure
     xml = create_project_xml(package_name=package_name,
                              version=version,
                              description=description,
@@ -160,8 +193,8 @@ def make_from_manifest(manifest_xml_str,
                              architecture_independent=architecture_independent,
                              metapackage=metapackage)
 
-    # Most dependencies are build and run depends. Comment out the test_depend
-    # dependencies.
+    # Most dependencies are build and run depends. Comment out only the
+    # test_depend dependencies.
     for name in ['test_depend']:
         xml = xml_lib.comment_out_tags_named(xml, name)
 
@@ -173,54 +206,28 @@ def make_from_stack_manifest(manifest_xml_str,
                              packages,
                              version):
     """
-    Make the contents of a project.xml file from the string contents of
-    stack.xml.
+    Return a package.xml sturcture for metapackages filled with the data from
+    the given manifest_xml_str.
 
-        >>> manifest_xml_str = '\
-    <package>\
-      <description brief="one line of text">\
-        long description goes here, \
-        <em>XHTML is allowed</em>\
-      </description>\
-      <author>Alice/alice@somewhere.bar, Bob/bob@nowhere.foo</author>\
-      <license>BSD</license>\
-      <url>http://pr.willowgarage.com/</url>\
-      <logo>http://pr.willowgarage.com/blog/photos/sensor_head1_500.jpg</logo>\
-      <depend package="pkgname"/>\
-      <depend package="common"/>\
-      <rosdep name="python" />\
-      <versioncontrol type="svn"\
-          url="https://playerstage.svn.sourceforge.net/svnroot/playerstage/code/player/trunk"/>\
-      <export>\
-        <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lros"/>\
-        <cpp os="osx" cflags="-I${prefix}/include" lflags="-L${prefix}/lib\
-            -Wl,-rpath,-L${prefix}lib -lrosthread -framework CoreServices"/>\
-      </export>\
-    </package>\
-    '
-    >>> pkg_xml = make_from_manifest(  # doctest: +ELLIPSIS
-    ...     manifest_xml_str,
-    ...     package_name='my_pkg', version='0.1.2',
-    ...     architecture_independent=False,
-    ...     metapackage=False,
-    ...     bugtracker_url='https://github.com/ros/my_pkg/issues',
-    ...     replaces=[], conflicts=[])
-    >>> import xml.etree.ElementTree as ET
-    >>> pkg = ET.XML(pkg_xml)
+    See http://ros.org/wiki/catkin/package.xml#Metapackages for more.
+
     """
+    # TODO This function is very similar to make_from_manifest. Unify both
+    #      functions.
+
+    # collect and save infos from the manifest.xml file
     manifest = ET.XML(manifest_xml_str)
     description = xml_lib.xml_find(manifest, 'description').text.strip()
     authors_str = xml_lib.xml_find(manifest, 'author').text
     authors = parse_authors_field(authors_str)
-
     licenses_str = xml_lib.xml_find(manifest, 'license').text
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
-
     maintainers = [(a, {'email': ''})
                    if isinstance(a, basestring)
                    else a for a in authors]
 
+    # put the collected infos into a new (package.)xml structure
     xml = create_project_xml(package_name=package_name,
                              version=version,
                              description=description,
@@ -239,30 +246,6 @@ def make_from_stack_manifest(manifest_xml_str,
                              metapackage=True)
 
     return xml
-
-
-def parse_authors_field(authors_str):
-    """
-    Extract author names and email addresses from free-form text in the <author>
-    tag of manifest.xml.
-
-    >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
-    [('Alice', {'email': 'alice@somewhere.bar'}), 'Bob']
-    >>> parse_authors_field(None)
-    []
-    """
-    if authors_str is None:
-        return []
-
-    authors = []
-    for s in SPACE_COMMA_RX.split(authors_str):
-        parts = s.split('/')
-        if len(parts) == 1:
-            authors.append(parts[0])
-        elif len(parts) == 2:
-            pair = (parts[0], dict(email=parts[1]))
-            authors.append(pair)
-    return authors
 
 
 def create_project_xml(package_name, version, description, maintainers,
@@ -331,40 +314,50 @@ def create_project_xml(package_name, version, description, maintainers,
         architecture_independent,
         metapackage
     )
-    return '''\
-<package>
-  <name>%(package_name)s</name>
-  <version>%(version)s</version>
-  <description>%(description)s</description>
-%(maintainers_part)s
+    return PACKAGE_TEMPLATE % subs
 
-%(licenses_part)s
 
-  <url type="website">%(website_url)s</url>
-%(bugtracker_part)s
+##############################################################################
+# Utility functions
+##############################################################################
+def merge_adjacent_dups(lines):
+    """
+    Remove adjacent duplicate lines from a list of strings.
 
-%(authors_part)s
+    >>> merge_adjacent_dups(['a', 'b', 'b'])
+    ['a', 'b']
+    >>> merge_adjacent_dups(['a', 'b', 'b', 'a'])
+    ['a', 'b', 'a']
+    >>> merge_adjacent_dups(['a'])
+    ['a']
+    >>> merge_adjacent_dups([])
+    []
+    """
+    return [l1 for l1, l2 in zip(lines, lines[1:] + [None]) if l1 != l2]
 
-  <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
 
-  <!-- Dependencies needed to compile this package. -->
-%(build_depends_part)s
+def parse_authors_field(authors_str):
+    """
+    Extract author names and email addresses from free-form text in the
+    <author> tag of manifest.xml.
 
-  <!-- Dependencies needed after this package is compiled. -->
-%(run_depends_part)s
+    >>> parse_authors_field('Alice/alice@somewhere.bar, Bob')
+    [('Alice', {'email': 'alice@somewhere.bar'}), 'Bob']
+    >>> parse_authors_field(None)
+    []
+    """
+    if authors_str is None:
+        return []
 
-  <!-- Dependencies needed only for running tests. -->
-%(test_depends_part)s
-
-%(replaces_part)s
-%(conflicts_part)s
-
-  <export>
-%(exports_part)s
-  </export>
-</package>
-''' % subs
+    authors = []
+    for s in SPACE_COMMA_RX.split(authors_str):
+        parts = s.split('/')
+        if len(parts) == 1:
+            authors.append(parts[0])
+        elif len(parts) == 2:
+            pair = (parts[0], dict(email=parts[1]))
+            authors.append(pair)
+    return authors
 
 
 def comment_out(xml):
