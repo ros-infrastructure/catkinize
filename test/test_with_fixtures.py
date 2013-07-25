@@ -1,6 +1,9 @@
 import os
 import unittest
-import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
 
 import imp
 imp.load_source('catkinize_cmakelists',
