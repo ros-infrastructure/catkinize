@@ -198,23 +198,28 @@ find_package(catkin REQUIRED %s)
 
 
 def make_package_lines(deps_str, with_messages):
-    full_deps_str = 'DEPENDS %s' % deps_str \
-                    if deps_str.strip() \
-                    else 'DEPENDS  # TODO'
-    msg_str = '## Generate added messages and services with any dependencies listed here\ngenerate_messages(\n  #TODO DEPENDENCIES geometry_msgs std_msgs\n)' if with_messages else ''
-    lines = '''%s
+    PACKAGE_LINES = '''\
+## Generate added messages and services with any dependencies listed here
+%(comment_symbol)sgenerate_messages(
+%(comment_symbol)s    #TODO DEPENDENCIES geometry_msgs std_msgs
+%(comment_symbol)s)
+
+# catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
 # TODO: fill in what other packages will need to use this package
-## DEPENDS: system dependencies of this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## INCLUDE_DIRS:
-## LIBRARIES: libraries you create in this project that dependent projects also need
 catkin_package(
-    %s
+    DEPENDS %(dependencies)s
     CATKIN_DEPENDS # TODO
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
-)''' % (msg_str, full_deps_str)
-    return lines
+)'''
+
+    comment_symbol = '' if with_messages else '#'
+    dependencies = deps_str if deps_str.strip() else '# TODO add dependencies'
+
+    return PACKAGE_LINES % {
+        'comment_symbol': comment_symbol,
+        'dependencies': dependencies
+    }
 
 
 def convert_snippet(name, funargs):
