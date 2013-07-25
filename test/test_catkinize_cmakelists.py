@@ -15,35 +15,19 @@ class CatkinizeCmakeTest(unittest.TestCase):
         lines = make_header_lines('foo', 'bar, baz')
         self.assertTrue('project(foo)' in lines, lines)
 
-    def test_make_package_lines(self):
+    def test_make_package_lines_with_messages(self):
+        """
+        generate_message() should not be a comment.
+        """
         lines = make_package_lines('bar, baz', True)
-        self.assertEquals(
-            '''## Generate added messages and services with any dependencies listed here
-generate_messages(
-  #TODO DEPENDENCIES geometry_msgs std_msgs
-)
-# TODO: fill in what other packages will need to use this package
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-    DEPENDS bar, baz
-    CATKIN-DEPENDS # TODO
-    INCLUDE_DIRS # TODO include
-    LIBRARIES # TODO
-)''', lines)
+        self.assertTrue('#generate_messages' not in lines)
+
+    def test_make_package_lines_without_messages(self):
+        """
+        generate_message() should be a comment.
+        """
         lines = make_package_lines('bar, baz', False)
-        self.assertEquals('''
-# TODO: fill in what other packages will need to use this package
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-    DEPENDS bar, baz
-    CATKIN-DEPENDS # TODO
-    INCLUDE_DIRS # TODO include
-    LIBRARIES # TODO
-)''', lines)
+        self.assertTrue('#generate_messages' in lines)
 
     def test_argument_splitter_single_line(self):
         orig = "(foo bar)"
