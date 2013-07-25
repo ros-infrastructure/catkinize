@@ -31,66 +31,30 @@ import os
 import re
 import sys
 
-from catkinize.convert_manifest import convert_manifest, make_from_stack_manifest
+from catkinize.convert_manifest import convert_manifest, \
+    make_from_stack_manifest
 from catkinize.convert_cmake import convert_cmake, make_metapackage_cmake
 
 
-class Ui(object):
-
-    def get_input(self, prompt):
-        """Helper function to proived python2 + py3k compatible get_input"""
-        if sys.hexversion > 0x03000000:
-            return input(prompt)
-        else:
-            return raw_input(prompt)
-
-DEFAULT_UI = Ui
-
-
-def _create_changesets(path, filenames, newfiles=None, contents=None):
-    """
-    creates 4 tupels depending on the 4 input lists.
-    look up filenames in path, add changeset to rename to xyz.backup, if newfile is given, adds action to create with given contents
-    """
-    oldfiles = [os.path.join(path, filename) for filename in filenames]
-    backup_files = [oldfile + '.backup' for oldfile in oldfiles]
-    changeset = []  # 4-tupels of oldfile, backup, newfile, contents
-    for oldfile, backup_file in zip(oldfiles, backup_files):
-        if os.path.isfile(oldfile) and os.path.isfile(backup_file):
-            raise ValueError('Cannot write backup file %s, operation aborted without changes' % backup_file)
-
-    if not newfiles:
-        newfiles = [None for _ in oldfiles]
-        contents = [None for _ in oldfiles]
-
-    for oldfile, backup_file, newfile, content in zip(oldfiles, backup_files, newfiles, contents):
-        if os.path.exists(oldfile):
-            if newfile:
-                changeset.append((oldfile,
-                                  backup_file,
-                                  os.path.join(path, newfile),
-                                  content))
-            else:
-                changeset.append((oldfile,
-                                  backup_file,
-                                  None, None))
-        elif newfile:
-            changeset.append((None, None, newfile, content))
-
-    return changeset
-
-
+##############################################################################
+# Main Logic
+##############################################################################
 def catkinize_package(path, version):
     """
-    Calculates a list of changes for one package. changes are 4-tupels of oldfile, backupfile, newfile, contents.
-    This comes before execution so that the user may confirm or reject changes.
+    Calculates a list of changes for one package.
+
+    Changes are 4-tupels of oldfile, backupfile, newfile, contents.  This comes
+    before execution so that the user may confirm or reject changes.
     """
     if not os.path.isdir(path):
         raise ValueError('No directory found at %s' % path)
     manifest_path = os.path.join(path, 'manifest.xml')
 
     if not os.path.isfile(manifest_path):
-        raise ValueError("No rosbuild package at %s, missing manifest.xml" % manifest_path)
+        raise ValueError(
+            "No rosbuild package at %s, missing manifest.xml" % manifest_path)
+
+    # build the content of the potential new CMakeLists.txt and packaeg.xml
     new_manifest = convert_manifest(path, manifest_path, version)
     new_cmake = convert_cmake(path)
 
@@ -103,20 +67,29 @@ def catkinize_package(path, version):
 
 def catkinize_stack(path, version):
     """
-    Calculates a list of changes for one stack. changes are 4-tupels of oldfile, backupfile, newfile, contents.
-    This comes before execution so that the user may confirm or reject changes.
+    Calculates a list of changes for one stack.
+
+    Changes are 4-tupels of oldfile, backupfile, newfile, contents.  This comes
+    before execution so that the user may confirm or reject changes.
     """
     stack_manifest_path = os.path.join(path, 'stack.xml')
     if not os.path.isfile(stack_manifest_path):
-        raise ValueError('Path is not a rosbuild stack, missing stack.xml at %s' % path)
+        raise ValueError(
+            'Path is not a rosbuild stack, missing stack.xml at %s' %
+            path)
+
     with open(stack_manifest_path) as fhand:
         stack_manifest = fhand.read()
-    changeset = []
 
+    changeset = []
     if os.path.isfile(os.path.join(path, 'manifest.xml')):
         # unary stack
         packages = [path]
-        changeset.extend(_create_changesets(path, ['stack.xml', 'Makefile', 'CMakeLists.txt']))
+        changeset.extend(
+            _create_changesets(path,
+                               ['stack.xml',
+                                'Makefile',
+                                'CMakeLists.txt']))
     else:
         packages = []
         for (parentdir, subdirs, files) in os.walk(path):
@@ -126,27 +99,50 @@ def catkinize_stack(path, version):
                 del subdirs[:]
             elif os.path.basename(parentdir) in ['.svn', 'CVS', '.hg', '.git']:
                 del subdirs[:]
+
         meta_package_name = os.path.basename(path)
         meta_manifest = os.path.join(meta_package_name, 'package.xml')
         package_names = [os.path.basename(package) for package in packages]
-        meta_contents = make_from_stack_manifest(stack_manifest, meta_package_name, package_names, version)
+        meta_contents = make_from_stack_manifest(
+            stack_manifest,
+            meta_package_name,
+            package_names,
+            version)
         meta_cmake = os.path.join(meta_package_name, 'CMakeLists.txt')
         cmake_contents = make_metapackage_cmake(meta_package_name)
-        changeset.extend(_create_changesets(path,
-                                            ['stack.xml', 'Makefile', 'CMakeLists.txt'],
-                                            [meta_manifest, None, meta_cmake],
-                                            [meta_contents, None, cmake_contents]))
-
+        changeset.extend(
+            _create_changesets(path,
+                               ['stack.xml',
+                                'Makefile',
+                                'CMakeLists.txt'],
+                               [meta_manifest, None, meta_cmake],
+                               [meta_contents, None, cmake_contents]))
     # print(packages)
-
     for package in packages:
         changeset.extend(catkinize_package(package, version))
+
     return changeset
+
+
+##############################################################################
+# Utility functions
+##############################################################################
+class Ui(object):
+    def get_input(self, prompt):
+        """Helper function to provide python2 + python3 compatible get_input"""
+        if sys.hexversion > 0x03000000:
+            return input(prompt)
+        else:
+            return raw_input(prompt)
+
+DEFAULT_UI = Ui
 
 
 def prompt_changes(changeset, ui_class=DEFAULT_UI):
     """
-    interactive function, displays a list of planned changes for the user to confirm.
+    Interactive function, displays a list of planned changes for the user to
+    confirm.
+
     :returns: True if the user confirmed, false else
     """
     ui = ui_class()
@@ -190,6 +186,45 @@ def perform_changes(changeset):
             with open(newfile, "w") as fhand:
                 fhand.write(content)
                 print("Wrote new file %s" % newfile)
+
+
+def _create_changesets(path, filenames, newfiles=None, contents=None):
+    """
+    Creates 4 tupels depending on the 4 input lists.
+
+    Look up filenames in path, add changeset to rename to xyz.backup, if
+    newfile is given, adds action to create with given contents.
+    """
+    oldfiles = [os.path.join(path, filename) for filename in filenames]
+    backup_files = [oldfile + '.backup' for oldfile in oldfiles]
+    changeset = []  # 4-tupels of oldfile, backup, newfile, contents
+    for oldfile, backup_file in zip(oldfiles, backup_files):
+        if os.path.isfile(oldfile) and os.path.isfile(backup_file):
+            raise ValueError(
+                'Cannot write backup file %s, operation aborted without changes' %
+                backup_file)
+
+    if not newfiles:
+        newfiles = [None for _ in oldfiles]
+        contents = [None for _ in oldfiles]
+
+    for oldfile, backup_file, newfile, content in zip(
+            oldfiles, backup_files, newfiles, contents):
+
+        if os.path.exists(oldfile):
+            if newfile:
+                changeset.append((oldfile,
+                                  backup_file,
+                                  os.path.join(path, newfile),
+                                  content))
+            else:
+                changeset.append((oldfile,
+                                  backup_file,
+                                  None, None))
+        elif newfile:
+            changeset.append((None, None, newfile, content))
+
+    return changeset
 
 
 def is_valid_version(version):
