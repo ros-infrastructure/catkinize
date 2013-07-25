@@ -28,6 +28,7 @@
 
 from __future__ import print_function
 import os
+import re
 import sys
 
 from catkinize.convert_manifest import convert_manifest, make_from_stack_manifest
@@ -189,3 +190,31 @@ def perform_changes(changeset):
             with open(newfile, "w") as fhand:
                 fhand.write(content)
                 print("Wrote new file %s" % newfile)
+
+
+def is_valid_version(version):
+    """Check if `version` is a valid version according to
+    http://ros.org/reps/rep-0127.html#version
+
+    Valid examples:
+    >>> is_valid_version('0.1.0')
+    True
+    >>> is_valid_version('0.12.0')
+    True
+    >>> is_valid_version('0.123.0')
+    True
+    >>> is_valid_version('5.123.9')
+    True
+
+    Invalid examples:
+    >>> is_valid_version('0.1')
+    False
+    >>> is_valid_version('0.12.a')
+    False
+    >>> is_valid_version('0.')
+    False
+    >>> is_valid_version('123.9.5.2')
+    False
+    """
+    match = re.match(r'^\d+\.\d+\.\d+$', version)
+    return match is not None

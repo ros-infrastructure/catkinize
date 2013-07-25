@@ -34,6 +34,7 @@ import os
 from optparse import OptionParser
 
 from catkinize.convert_manifest import convert_manifest
+from catkinize.main import is_valid_version
 
 
 def main():
@@ -66,8 +67,11 @@ def main():
         parser.error('wrong number of arguments %s' % len(args))
 
     manifest_xml_path = args[0]
-    # package_name = args[1]
     version = args[2]
+
+    if not is_valid_version(version):
+        parser.error("The version must have the format: \d.\d.\d")
+
     print(convert_manifest(os.path.dirname(manifest_xml_path),
                            manifest_xml_path,
                            version,
