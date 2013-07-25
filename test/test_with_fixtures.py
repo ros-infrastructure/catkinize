@@ -1,6 +1,10 @@
 import os
 import unittest
-import StringIO
+# workaround: StringIO now works with py2 and py3
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
 
 import imp
 imp.load_source('catkinize_cmakelists',
