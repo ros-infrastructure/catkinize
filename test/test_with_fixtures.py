@@ -1,5 +1,6 @@
 import os
 import unittest
+
 # workaround: StringIO now works with py2 and py3
 try:
     from io import StringIO

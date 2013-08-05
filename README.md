@@ -1,6 +1,8 @@
 Catkinize
 =========
 
+[![Build Status](https://travis-ci.org/sotte/catkinize.png?branch=travis)](https://travis-ci.org/sotte/catkinize)
+
 This is a collection of scripts to help convert ROS stacks to Catkin.
 
 Installing
