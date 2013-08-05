@@ -8,8 +8,10 @@ from catkinize.convert_cmake import make_header_lines, convert_snippet, \
 class CatkinizeCmakeTest(unittest.TestCase):
 
     def test_convert_snippet(self):
-        self.assertEqual(' catkin_add_gtest(bar)', convert_snippet(' rosbuild_add_gtest', '(bar)'))
-        self.assertEqual(' catkin_add_nosetests(bar)', convert_snippet(' rosbuild_add_pyunit', '(bar)'))
+        self.assertEqual(' catkin_add_gtest(bar)', convert_snippet(
+            ' rosbuild_add_gtest', '(bar)'))
+        self.assertEqual(' catkin_add_nosetests(bar)', convert_snippet(
+            ' rosbuild_add_pyunit', '(bar)'))
 
     def test_make_header_lines(self):
         lines = make_header_lines('foo', 'bar, baz')
@@ -75,15 +77,20 @@ link_boost(${PROJECT_NAME} system)
         self.assertEqual(orig, m.string)
 
     def test_convert_boost_snippet_none(self):
-        replacement, comps = convert_boost_snippet('rosbuild_add_boost_directories', '()')
+        replacement, comps = convert_boost_snippet(
+            'rosbuild_add_boost_directories', '()')
         self.assertEqual((None, None), (replacement, comps))
 
     def test_convert_boost_snippet_many(self):
-        replacement, comps = convert_boost_snippet('rosbuild_link_boost', '(foo bar baz)')
-        self.assertEqual('target_link_libraries(foo ${Boost_LIBRARIES})', replacement)
+        replacement, comps = convert_boost_snippet(
+            'rosbuild_link_boost', '(foo bar baz)')
+        self.assertEqual(
+            'target_link_libraries(foo ${Boost_LIBRARIES})', replacement)
         self.assertEqual(['bar', 'baz'], comps)
 
     def test_convert_boost_snippet_multiline(self):
-        replacement, comps = convert_boost_snippet('rosbuild_link_boost', '(foo\nbar\nbaz)')
-        self.assertEqual('target_link_libraries(foo ${Boost_LIBRARIES})', replacement)
+        replacement, comps = convert_boost_snippet(
+            'rosbuild_link_boost', '(foo\nbar\nbaz)')
+        self.assertEqual(
+            'target_link_libraries(foo ${Boost_LIBRARIES})', replacement)
         self.assertEqual(['bar', 'baz'], comps)
