@@ -34,7 +34,7 @@ import os
 from optparse import OptionParser
 
 from catkinize.convert_manifest import convert_manifest
-from catkinize.main import is_valid_version
+from catkinize.utils import is_valid_version
 
 
 def main():

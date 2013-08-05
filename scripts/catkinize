@@ -30,8 +30,8 @@
 
 from optparse import OptionParser
 
-from catkinize.main import catkinize_stack, prompt_changes, perform_changes, \
-    is_valid_version
+from catkinize.main import catkinize_stack, prompt_changes, perform_changes
+from catkinize.utils import is_valid_version
 
 
 def main():
