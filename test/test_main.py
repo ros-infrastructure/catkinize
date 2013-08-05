@@ -3,7 +3,7 @@ import unittest
 import tempfile
 import shutil
 
-from catkinize.main import catkinize_package, catkinize_stack, _create_changesets, perform_changes
+from catkinize.main import _create_changesets, perform_changes
 
 
 class CatkinizeTest(unittest.TestCase):
@@ -36,17 +36,33 @@ class CatkinizeTest(unittest.TestCase):
         self.assertEqual([], _create_changesets('.', []))
         self.assertEqual([], _create_changesets('.', [], [], []))
         self.assertEqual([], _create_changesets('.', ['/foo'], [], []))
-        self.assertEqual([], _create_changesets(self.foo_stack, ['stack'], [], []))
-        self.assertEqual([(self.foo_stack_xml, self.foo_stack_xml + '.backup', None, None)],
-                         _create_changesets(self.foo_stack, ['stack.xml'], [], []))
-        self.assertEqual([(self.foo_stack_xml, self.foo_stack_xml + '.backup', None, None)],
-                         _create_changesets(self.foo_stack, ['stack.xml']))
-        self.assertEqual([(None, None, 'foo', 'hello')],
-                         _create_changesets('.', ['baz'], ['foo'], ['hello']))
-        self.assertEqual([(self.foo_stack_xml, self.foo_stack_xml + '.backup', os.path.join(self.foo_stack, 'foo'), 'hello')],
-                         _create_changesets(self.foo_stack, ['stack.xml'], ['foo'], ['hello']))
-        self.assertEqual([(None, None, 'foo', 'hello'), (None, None, 'fooz', 'hello2')],
-                         _create_changesets('.', ['baz', 'bam'], ['foo', 'fooz'], ['hello', 'hello2']))
+        self.assertEqual(
+            [],
+            _create_changesets(self.foo_stack, ['stack'], [], [])
+        )
+        self.assertEqual(
+            [(self.foo_stack_xml, self.foo_stack_xml + '.backup', None, None)],
+            _create_changesets(self.foo_stack, ['stack.xml'], [], [])
+        )
+        self.assertEqual(
+            [(self.foo_stack_xml, self.foo_stack_xml + '.backup', None, None)],
+            _create_changesets(self.foo_stack, ['stack.xml'])
+        )
+        self.assertEqual(
+            [(None, None, 'foo', 'hello')],
+            _create_changesets('.', ['baz'], ['foo'], ['hello'])
+        )
+        self.assertEqual(
+            [(self.foo_stack_xml, self.foo_stack_xml + '.backup', os.path.join(
+                self.foo_stack, 'foo'), 'hello')],
+            _create_changesets(
+                self.foo_stack, ['stack.xml'], ['foo'], ['hello'])
+        )
+        self.assertEqual(
+            [(None, None, 'foo', 'hello'), (None, None, 'fooz', 'hello2')],
+            _create_changesets(
+                '.', ['baz', 'bam'], ['foo', 'fooz'], ['hello', 'hello2'])
+        )
         raised = False
         try:
             _create_changesets(self.foo_stack, ['oldfile'])
@@ -65,7 +81,8 @@ class CatkinizeTest(unittest.TestCase):
         barfile = os.path.join(self.foo_stack, 'bar')
         subfile = os.path.join(self.foo_stack, 'subdir', 'bip')
         perform_changes([(targetfile, targetfile + '.backup', None, None),
-                         (targetfile2, targetfile2 + '.backup', foofile, 'foo'),
+                         (targetfile2, targetfile2 +
+                          '.backup', foofile, 'foo'),
                          (None, None, barfile, 'bar'),
                          (None, None, subfile, 'pip')])
         self.assertTrue(os.path.exists(foofile))
