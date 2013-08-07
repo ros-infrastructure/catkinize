@@ -69,9 +69,8 @@ PACKAGE_TEMPLATE = '''\
 %(replaces_part)s
 %(conflicts_part)s
 
-  <export>
 %(exports_part)s
-  </export>
+
 </package>
 '''
 
@@ -412,11 +411,17 @@ def dict_to_attrs(values):
 
 
 def make_exports_section(exports, architecture_independent, metapackage):
-    parts = [make_empty_tag(name, attrs_dict)
-             for name, attrs_dict in exports]
-    if architecture_independent:
-        parts.append('<architecture_independent/>')
-    if metapackage:
-        parts.append('<metapackage/>')
-    parts = [indent(p, 2) for p in parts]
-    return '\n'.join(parts)
+    if len(exports) > 0:
+        parts=['<export>']
+        parts += [make_empty_tag(name, attrs_dict)
+                 for name, attrs_dict in exports]
+        if architecture_independent:
+            parts.append('<architecture_independent/>')
+        if metapackage:
+            parts.append('<metapackage/>')
+        parts = [indent(p, 2) for p in parts if p!= '<export>']
+        parts.append('</export>')
+        
+        return '\n'.join(parts)
+    else:
+        return ""
