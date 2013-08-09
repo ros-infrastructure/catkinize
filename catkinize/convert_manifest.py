@@ -74,6 +74,11 @@ PACKAGE_TEMPLATE = '''\
 </package>
 '''
 
+def is_a_string(obj):
+    try:
+        return isinstance(obj, basestring)
+    except NameError:
+        return isinstance(obj, str)
 
 ##############################################################################
 # Main Logic
@@ -167,7 +172,7 @@ def make_from_manifest(manifest_xml_str,
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
     maintainers = [(a, {'email': ''})
-                   if isinstance(a, str)
+                   if is_a_string(a)
                    else a for a in authors]
     depend_tags = manifest.findall('depend')
     depends = [d.attrib['package'] for d in depend_tags]
@@ -223,7 +228,7 @@ def make_from_stack_manifest(manifest_xml_str,
     licenses = SPACE_COMMA_RX.split(licenses_str)
     website_url = xml_lib.xml_find(manifest, 'url').text
     maintainers = [(a, {'email': ''})
-                   if isinstance(a, str)
+                   if is_a_string(a)
                    else a for a in authors]
 
     # put the collected infos into a new (package.)xml structure
@@ -379,7 +384,7 @@ def make_tag_from_row(name, row):
     >>> make_tag_from_row('foo', ('bar', dict(baz='buzz')))
     '<foo baz="buzz">bar</foo>'
     """
-    if isinstance(row, str):
+    if is_a_string(row):
         return make_tag(name, attrs_dict={}, contents=row)
     if isinstance(row, tuple):
         return make_tag(name, attrs_dict=row[1], contents=row[0])
