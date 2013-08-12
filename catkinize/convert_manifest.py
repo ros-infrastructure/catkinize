@@ -74,11 +74,6 @@ PACKAGE_TEMPLATE = '''\
 </package>
 '''
 
-def is_a_string(obj):
-    try:
-        return isinstance(obj, basestring)
-    except NameError:
-        return isinstance(obj, str)
 
 ##############################################################################
 # Main Logic
@@ -364,8 +359,23 @@ def parse_authors_field(authors_str):
     return authors
 
 
-def comment_out(xml):
-    return '<!-- %s -->' % xml
+##############################################################################
+# make parts
+##############################################################################
+def make_exports_section(exports, architecture_independent, metapackage):
+    """Make the export section from the given arguments"""
+    if len(exports) == 0:
+        return ""
+
+    parts = [make_empty_tag(name, attrs_dict) for name, attrs_dict in exports]
+    if architecture_independent:
+        parts.append('<architecture_independent/>')
+    if metapackage:
+        parts.append('<metapackage/>')
+    parts = [indent(p, 2) for p in parts]
+
+    parts = ['<export>'] + parts + ['</export>']
+    return '\n'.join(parts)
 
 
 def make_section(tag_name, rows):
@@ -400,6 +410,11 @@ def make_empty_tag(name, attrs_dict):
     return '<%s/>' % space_join([name, dict_to_attrs(attrs_dict)])
 
 
+##############################################################################
+def comment_out(xml):
+    return '<!-- %s -->' % xml
+
+
 def space_join(words):
     return ' '.join(w for w in words if w)
 
@@ -415,18 +430,9 @@ def dict_to_attrs(values):
     return ' '.join('%s="%s"' % (k, v) for k, v in values.items())
 
 
-def make_exports_section(exports, architecture_independent, metapackage):
-    if len(exports) > 0:
-        parts=['<export>']
-        parts += [make_empty_tag(name, attrs_dict)
-                 for name, attrs_dict in exports]
-        if architecture_independent:
-            parts.append('<architecture_independent/>')
-        if metapackage:
-            parts.append('<metapackage/>')
-        parts = [indent(p, 2) for p in parts if p!= '<export>']
-        parts.append('</export>')
-        
-        return '\n'.join(parts)
-    else:
-        return ""
+def is_a_string(obj):
+    """Wrapper for py2 and py3 to check if obj is a string."""
+    try:
+        return isinstance(obj, basestring)
+    except NameError:
+        return isinstance(obj, str)
