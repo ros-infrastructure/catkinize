@@ -55,11 +55,11 @@ In many cases it might be asier to start a new CMakeLists.txt from scratch, or u
 Background
 ----------
 
-[This wiki page](http://www.ros.org/wiki/catkin/migrating_from_rosbuild)
+[This wiki page](http://wiki.ros.org/catkin/migrating_from_rosbuild)
 gives some instructions on how to catkinize ROS stacks.
 
-More general information on writing CMakeLists.txt files using Catkin can
+More general information on using Catkin can
 be found
-[here](http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html).
+[here](http://docs.ros.org/api/catkin/html/index.html).
 
 The specification for package.xml files is in [REP 127](http://www.ros.org/reps/rep-0127.html).
