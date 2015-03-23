@@ -30,9 +30,10 @@
 
 from optparse import OptionParser
 
-from catkinize.main import catkinize_stack, prompt_changes, perform_changes
+from catkinize.main import catkinize_stack, catkinize_package, prompt_changes,\
+    perform_changes
 from catkinize.utils import is_valid_version
-
+import os
 
 def main():
     usage = 'usage: %prog path version'
@@ -53,7 +54,15 @@ working with catkin.'''
     if not is_valid_version(version):
         parser.error("The version must have the format: \d.\d.\d")
 
-    changeset = catkinize_stack(path, version)
+    if os.path.isfile(os.path.join(path, 'stack.xml')):
+        changeset = catkinize_stack(path, version)
+    elif os.path.isfile(os.path.join(path, 'manifest.xml')):
+        changeset = catkinize_package(path, version)
+    else:
+        raise ValueError(
+            'Path is not a rosbuild stack or package, missing stack.xml or ' + \
+            'manifest.xml at %s' % path)
+
     if prompt_changes(changeset):
         perform_changes(changeset)
 
